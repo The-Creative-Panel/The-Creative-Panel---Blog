@@ -4,7 +4,7 @@
 
 The Creative Panel is Joel Green's writing blog: essays, chapters, worldbuilding and notes on the making of *The Halo*, book one of the Astroseed Trilogy. It's designed like an online magazine, with a dark editorial look, gold-and-teal branding and a layout inspired by modern tech/culture magazines.
 
-Its companion site is the author homepage, [joelgreenauthor.com](https://joelgreenauthor.com) ([repo](https://github.com/LykosOfficial/Joel-Green.-Author-Website)).
+Its companion site is the author homepage, [joelgreenauthor.com](https://joelgreenauthor.com) ([repo](https://github.com/The-Creative-Panel/Joel-Green.-Author-Website)).
 
 ## What's on the site
 
