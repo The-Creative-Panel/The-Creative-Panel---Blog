@@ -31,8 +31,10 @@ const connect = [
 ];
 ---
 
-<footer class="border-t border-border bg-background">
-	<div class="footer-inner mx-auto w-full pt-14 pb-8">
+<footer class="bg-background">
+	<div class="footer-inner mx-auto w-full pb-8">
+		<!-- Top rule: as wide as the footer's content (like the newsletter divider), not the whole window -->
+		<div class="mb-14 border-t border-border" aria-hidden="true"></div>
 		<!-- Top: brand + link columns -->
 		<div class="grid gap-10 md:grid-cols-[minmax(0,1fr)_auto]">
 			<div class="max-w-sm">
