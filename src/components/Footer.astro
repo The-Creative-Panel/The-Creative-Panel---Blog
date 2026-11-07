@@ -1,6 +1,6 @@
 ---
 import { relFor } from '../lib/rehypeNofollow.mjs';
-// Site footer (prototype structure): logo + bio | Navigate | More | Connect,
+// Site footer (prototype structure): logo + bio | Navigate | More | Legal | Connect,
 // then a newsletter sign-up, then the copyright line.
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { legalPages } from '../data/legal';
@@ -69,6 +69,18 @@ const connect = [
 						}
 					</ul>
 				</nav>
+				<nav aria-label="Legal">
+					<p class="label !mb-3 !text-[16px] font-semibold text-muted-foreground">Legal</p>
+					<ul class="!m-0 space-y-2 !p-0" role="list">
+						{
+							legalPages.map((l) => (
+								<li class="list-none">
+									<a href={l.href} class="text-[16px] !text-foreground/80 hover:!text-primary">{l.label}</a>
+								</li>
+							))
+						}
+					</ul>
+				</nav>
 				<div>
 					<p class="label !mb-3 !text-[16px] font-semibold text-muted-foreground">Connect</p>
 					<ul class="!m-0 space-y-2 !p-0" role="list">
@@ -127,10 +139,7 @@ const connect = [
 		<!-- Bottom line -->
 		<div class="mt-8 flex flex-col gap-2 border-t border-border pt-6 text-[16px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
 			<p class="!m-0">© {year} Joel Green. All rights reserved.</p>
-			<nav aria-label="Legal" class="flex flex-wrap items-center gap-x-5 gap-y-1">
-				{legalPages.map((l) => <a href={l.href} class="!text-muted-foreground hover:!text-primary">{l.label}</a>)}
-				{profile.email && <a href={`mailto:${profile.email}`} class="!text-muted-foreground hover:!text-primary">{profile.email}</a>}
-			</nav>
+			{profile.email && <a href={`mailto:${profile.email}`} class="!text-muted-foreground hover:!text-primary">{profile.email}</a>}
 		</div>
 	</div>
 </footer>

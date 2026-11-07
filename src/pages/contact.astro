@@ -1,22 +1,17 @@
 ---
 // Contact: how to reach Joel, and what to write about. Google AdSense looks for a real
-// contact page (alongside About) when it reviews a site. The address lives in src/data/profile.ts.
+// contact page (alongside About) when it reviews a site. The address lives in src/data/profile.ts;
+// the cards (shadcn Card + Button, Untitled UI style) are in src/components/ContactCards.tsx.
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import LightPageHeader from '../components/LightPageHeader.astro';
 import { SITE_TITLE } from '../consts';
+import { ContactEmail, ContactTopics } from '../components/ContactCards';
 import { profile } from '../data/profile';
 import { abs, breadcrumbs, person } from '../lib/seo';
 
 const email = profile.email;
-const topics = [
-	{ title: 'Writing and the blog', text: 'Questions about a post, ideas for future ones, or a correction if I got something wrong.' },
-	{ title: 'The Halo', text: 'Questions about the novel, the Astroseed Trilogy, or my writing process.' },
-	{ title: 'Press and interviews', text: 'Interview requests, podcast appearances or features.' },
-	{ title: 'Collaborations', text: 'Writing projects, guest posts, or anything else you have in mind.' },
-	{ title: 'Your data', text: 'Requests about your comments or newsletter sign-up.', link: { href: '/privacy', label: 'Privacy Policy' } },
-];
 const schema = [
 	{
 		'@type': 'ContactPage',
@@ -49,34 +44,10 @@ const schema = [
 			</p>
 
 			<!-- The address, front and centre -->
-			<a href={`mailto:${email}`} class="group mb-12 flex flex-wrap items-center justify-between gap-4 border border-border bg-card p-6 !text-foreground no-underline transition-colors hover:border-primary sm:p-8">
-				<div>
-					<p class="label !mb-2 !text-[16px] text-primary">Email</p>
-					<p class="!m-0 break-all font-display text-[28px] font-semibold leading-tight sm:text-[34px]">{email}</p>
-				</div>
-				<span class="label !text-[16px] text-muted-foreground transition-colors group-hover:text-primary">Write to me →</span>
-			</a>
+			<ContactEmail email={email} />
 
 			<h2 class="label !mb-4 !text-[16px] text-muted-foreground">What to write about</h2>
-			<ul class="!m-0 grid gap-px border border-border bg-border !p-0 sm:grid-cols-2" role="list">
-				{
-					topics.map((t, i) => (
-						// An odd one out at the end spans both columns, so there's no empty cell
-						<li class:list={['list-none bg-background p-6', i === topics.length - 1 && topics.length % 2 === 1 && 'sm:col-span-2']}>
-							<h3 class="!mb-2 font-display !text-[20px] font-semibold uppercase">{t.title}</h3>
-							<p class="!m-0 text-[16px] leading-relaxed text-muted-foreground">
-								{t.text}
-								{t.link && (
-									<>
-										{' '}
-										See the <a href={t.link.href}>{t.link.label}</a>.
-									</>
-								)}
-							</p>
-						</li>
-					))
-				}
-			</ul>
+			<ContactTopics email={email} />
 
 			<h2 class="label !mb-4 mt-12 !text-[16px] text-muted-foreground">Other ways to follow along</h2>
 			<ul class="!m-0 space-y-2 !p-0 text-[16px]" role="list">
