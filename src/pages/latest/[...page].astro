@@ -1,0 +1,131 @@
+---
+// /latest/ (and /latest/page/2/ …): every post, newest first, grouped under the day it was
+// published (like Gizmodo's Latest). Each row: image, then category, title, summary, time.
+import { getCollection } from 'astro:content';
+import AdSlot from '../../components/AdSlot.astro';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Pagination from '../../components/Pagination.astro';
+import PostImage from '../../components/PostImage.astro';
+import TermHeader from '../../components/taxonomy/TermHeader.astro';
+import { SITE_TIMEZONE, SITE_TITLE } from '../../consts';
+import { paginate, type Page } from '../../lib/pagination';
+import { readingTime, sortByDate, type Post } from '../../lib/posts';
+import { abs, breadcrumbs } from '../../lib/seo';
+import { categoryUrl, termLabel } from '../../lib/taxonomy';
+
+export async function getStaticPaths() {
+	const posts = sortByDate(await getCollection('blog'));
+	return paginate(posts, '/latest/', 20).map((page) => ({
+		params: { page: page.current === 1 ? undefined : `page/${page.current}` },
+		props: { page, total: posts.length },
+	}));
+}
+
+const { page, total } = Astro.props as { page: Page<Post>; total: number };
+
+// "November 7th 2026", in the blog's time zone (src/consts.ts)
+const ordinal = (n: number) => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
+const dayParts = (d: Date) => {
+	const parts = Object.fromEntries(
+		new Intl.DateTimeFormat('en-US', { timeZone: SITE_TIMEZONE, year: 'numeric', month: 'long', day: 'numeric' }).formatToParts(d).map((p) => [p.type, p.value]),
+	);
+	return { key: `${parts.year}-${parts.month}-${parts.day}`, label: `${parts.month} ${ordinal(Number(parts.day))} ${parts.year}` };
+};
+const time = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: SITE_TIMEZONE });
+
+// Posts on this page, grouped by day (already newest first)
+const days: { key: string; label: string; posts: Post[] }[] = [];
+for (const post of page.items) {
+	const { key, label } = dayParts(post.data.pubDate);
+	const last = days[days.length - 1];
+	if (last?.key === key) last.posts.push(post);
+	else days.push({ key, label, posts: [post] });
+}
+
+const pageSuffix = page.current > 1 ? ` (page ${page.current})` : '';
+const schema = [
+	{
+		'@type': 'CollectionPage',
+		name: `Latest${pageSuffix}`,
+		url: abs(Astro.url.pathname),
+		isPartOf: { '@id': abs('/#website') },
+		mainEntity: {
+			'@type': 'ItemList',
+			itemListElement: page.items.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(`/blog/${p.id}/`), name: p.data.title })),
+		},
+	},
+	breadcrumbs([{ name: 'Latest', path: '/latest/' }]),
+];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			title={`Latest${pageSuffix} — ${SITE_TITLE}`}
+			description="Every post on The Creative Panel, newest first: essays, chapters and writing notes by Joel Green, grouped by the day they were published."
+			schema={schema}
+		/>
+		{page.current > 1 && <link rel="prev" href={page.current === 2 ? page.base : `${page.base}page/${page.current - 1}/`} />}
+		{page.current < page.total && <link rel="next" href={`${page.base}page/${page.current + 1}/`} />}
+	</head>
+	<body>
+		<Header />
+		<TermHeader label="Latest" kicker="Newest first" count={total} page={page} />
+
+		<div class="page-wide grid grid-cols-1 gap-10 py-12 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-12">
+			<main class="min-w-0">
+				{
+					days.map((day) => (
+						<section class="mb-12 last:mb-0" aria-label={day.label}>
+							<h2 class="label !mb-6 border-b border-border pb-3 !text-[16px] text-muted-foreground">{day.label}</h2>
+							<ul class="!m-0 space-y-8 !p-0" role="list">
+								{day.posts.map((p) => (
+									<li class="list-none">
+										<a href={`/blog/${p.id}/`} class="group grid grid-cols-1 gap-5 !text-foreground no-underline sm:grid-cols-[240px_minmax(0,1fr)] sm:gap-6">
+											<div class="aspect-[16/9] overflow-hidden bg-muted">
+												<PostImage
+													fallback={p.data.category ?? ''}
+													src={p.data.heroImage}
+													alt=""
+													width={480}
+													class="h-full w-full !rounded-none object-cover transition duration-500 group-hover:scale-[1.03]"
+												/>
+											</div>
+											<div class="min-w-0">
+												<h3 class="!mb-2 font-display !text-[26px] font-semibold uppercase !leading-[1.05] tracking-[-0.2px] transition-colors group-hover:text-primary">
+													{p.data.title}
+												</h3>
+												{p.data.description && <p class="!mb-3 text-[16px] leading-relaxed text-muted-foreground">{p.data.description}</p>}
+												<p class="!m-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-[16px] text-muted-foreground">
+													{p.data.category && (
+														<span class="label border border-primary/40 bg-primary/10 px-2 py-0.5 !text-[16px] text-primary">{termLabel(p.data.category)}</span>
+													)}
+													<time datetime={p.data.pubDate.toISOString()}>{time(p.data.pubDate)}</time>
+													<span aria-hidden="true">·</span>
+													<span>{readingTime(p)} min read</span>
+												</p>
+											</div>
+										</a>
+									</li>
+								))}
+							</ul>
+						</section>
+					))
+				}
+				{page.items.length === 0 && <p class="text-[16px] text-muted-foreground">No posts yet.</p>}
+				<Pagination current={page.current} total={page.total} base={page.base} />
+			</main>
+
+			<aside class="hidden lg:block">
+				<div class="sticky top-[80px]">
+					<AdSlot slot={import.meta.env.PUBLIC_ADSENSE_SLOT_HOME_SIDEBAR} format="vertical" minHeight={600} />
+				</div>
+			</aside>
+		</div>
+
+		<Footer />
+	</body>
+</html>

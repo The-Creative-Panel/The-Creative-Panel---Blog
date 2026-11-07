@@ -18,7 +18,7 @@ export interface SiteConfig {
 const DEFAULTS: SiteConfig = {
 	navigation: {
 		links: [
-			{ label: 'Latest', href: '/' },
+			{ label: 'Latest', href: '/latest' },
 			{
 				label: 'The Panel',
 				items: [
