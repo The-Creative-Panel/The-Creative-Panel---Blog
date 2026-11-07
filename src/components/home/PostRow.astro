@@ -11,7 +11,7 @@ const { post } = Astro.props;
 const { title, heroImage, tags } = post.data;
 ---
 
-<li class="post-row list-none border-b border-border py-5 first:pt-0" data-tags={tags.join(' ')}>
+<li class="post-row list-none border-b border-border py-5 first:pt-0 last:border-b-0" data-tags={tags.join(' ')}>
 	<a href={`/blog/${post.id}/`} class="group flex gap-4 !text-foreground no-underline">
 		<PostImage fallback={post.data.category ?? ''} src={heroImage} alt="" width={240} class="h-[72px] w-24 shrink-0 !rounded-none object-cover sm:h-24 sm:w-32" />
 		<div class="min-w-0">
