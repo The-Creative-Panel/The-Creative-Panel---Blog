@@ -26,9 +26,18 @@ export async function GET(context) {
 			// Cover image (a URL from the admin, or a local file), else the branded share card
 			const image = heroImage ? abs(typeof heroImage === 'string' ? heroImage : heroImage.src) : abs('/og-default.png');
 			const alt = heroImageAlt?.trim() || title;
+			const url = abs(`/blog/${post.id}/`);
+			// Full post for feed readers: the cover (with its credit), the body as rendered on the site,
+			// and a link back. Links and images that point inside the site are made absolute.
+			const body = (post.rendered?.html ?? '').replace(/(\s(?:href|src))="\/(?!\/)/g, `$1="${abs('/')}`);
+			const content =
+				`<figure><img src="${xml(image)}" alt="${xml(alt)}" />${heroImage && heroImageCredit?.trim() ? `<figcaption>Photo: ${xml(heroImageCredit.trim())}</figcaption>` : ''}</figure>` +
+				body +
+				`<hr /><p>Originally published on <a href="${url}">${xml(SITE_TITLE)}</a>. Comments and more writing at <a href="${abs('/')}">joelgreen.studio</a>.</p>`;
 			return {
 				title,
 				description: post.data.description,
+				content,
 				pubDate: post.data.pubDate,
 				link: `/blog/${post.id}/`,
 				categories: [post.data.category, ...post.data.tags],
