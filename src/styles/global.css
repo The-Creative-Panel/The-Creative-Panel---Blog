@@ -227,6 +227,16 @@
   .article-body ul, .article-body ol { padding-left: 1.4em; margin-bottom: 1.5em; }
   .article-body li { margin-bottom: 0.4em; }
   .article-body img { margin: 1.5rem 0; }
+  /* Photo with its "Photo: …" caption (src/lib/rehypeImageCaptions.mjs) */
+  .article-body .post-figure { margin: 1.5rem 0; }
+  .article-body .post-figure img { margin: 0; }
+  .article-body .post-figure figcaption {
+    margin-top: 0.5rem;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--muted-foreground);
+  }
 }
 
 /*

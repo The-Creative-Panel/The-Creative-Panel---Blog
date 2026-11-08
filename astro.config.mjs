@@ -10,6 +10,7 @@ import tailwindcss from '@tailwindcss/vite';
 import contentRefresh from './src/integrations/contentRefresh.mjs';
 import remarkDemoteH1 from './src/lib/remarkDemoteH1.mjs';
 import rehypeNofollow from './src/lib/rehypeNofollow.mjs';
+import rehypeImageCaptions from './src/lib/rehypeImageCaptions.mjs';
 
 
 // https://astro.build/config
@@ -25,7 +26,8 @@ export default defineConfig({
 
   // SEO: '# Heading 1' in a post becomes h2 (the post title is the page's only h1)
   // Links leaving the site get rel="nofollow noopener" (see src/lib/rehypeNofollow.mjs)
-  markdown: { remarkPlugins: [remarkDemoteH1], rehypePlugins: [rehypeNofollow] },
+  // Photos with alt text get a "Photo: …" caption underneath (src/lib/rehypeImageCaptions.mjs)
+  markdown: { remarkPlugins: [remarkDemoteH1], rehypePlugins: [rehypeNofollow, rehypeImageCaptions] },
 
   integrations: [mdx(), sitemap({
     // Legal pages are noindex (see LegalPage.astro), so they stay out of the sitemap too

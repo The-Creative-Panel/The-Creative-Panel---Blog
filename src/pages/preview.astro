@@ -46,6 +46,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 					</p>
 				</div>
 			</header>
+			<p class="mx-auto !mb-0 w-full max-w-7xl px-4 pt-2 text-right text-[13px] italic text-muted-foreground sm:px-6" aria-hidden="true" data-p="photo" hidden></p>
 
 			<main class="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
 				<p class="!mb-8 font-heading text-[19px] leading-snug text-muted-foreground" data-p="excerpt" hidden></p>
@@ -68,6 +69,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 			import { marked } from 'marked';
 			import { ADMIN_ORIGINS, SITE_TIMEZONE } from '../consts';
 			import { termLabel } from '../lib/taxonomy';
+			import { photoCaption } from '../lib/rehypeImageCaptions.mjs';
 
 			type PreviewPost = {
 				title: string;
@@ -116,11 +118,28 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 				cover.hidden = !p.coverImage;
 				if (p.coverImage && cover.getAttribute('src') !== p.coverImage) cover.src = p.coverImage;
 				cover.alt = p.coverImageAlt?.trim() || p.title;
+			const heroCaption = p.coverImage ? photoCaption(p.coverImageAlt) : null;
+			$('photo').textContent = heroCaption ?? '';
+			$('photo').hidden = !heroCaption;
 				const excerpt = p.excerpt || p.subtitle;
 				$('excerpt').textContent = excerpt ?? '';
 				$('excerpt').hidden = !excerpt;
 				// "# Heading" becomes h2, like real posts (the title is the page's only h1)
 				$('body').innerHTML = (marked.parse(String(p.content ?? ''), { async: false }) as string).replace(/<(\/?)h1\b/g, '<$1h2');
+			// "Photo: …" captions, like real posts (src/lib/rehypeImageCaptions.mjs)
+			$('body').querySelectorAll('p').forEach((para) => {
+				const only = para.children.length === 1 && !para.textContent?.trim() ? para.children[0] : null;
+				const img = only?.tagName === 'IMG' ? only : only?.tagName === 'A' && only.children.length === 1 && only.children[0].tagName === 'IMG' ? only.children[0] : null;
+				const caption = img && photoCaption(img.getAttribute('alt'));
+				if (!only || !caption) return;
+				const figure = document.createElement('figure');
+				figure.className = 'post-figure';
+				const figcaption = document.createElement('figcaption');
+				figcaption.setAttribute('aria-hidden', 'true');
+				figcaption.textContent = caption;
+				figure.append(only, figcaption);
+				para.replaceWith(figure);
+			});
 				errorBox.hidden = true;
 				article.hidden = false;
 			}

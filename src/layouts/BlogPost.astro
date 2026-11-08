@@ -153,6 +153,15 @@ const schema = [
 					</p>
 				</div>
 			</header>
+			{
+				// "Photo: …" under the hero, when a description was written in the admin (not the title fallback).
+				// Screen readers already hear it as the image's alt text, so they skip this line.
+				heroImage && heroImageAlt?.trim() && (
+					<p class="mx-auto !mb-0 w-full max-w-7xl px-4 pt-2 text-right text-[13px] italic text-muted-foreground sm:px-6" aria-hidden="true">
+						Photo: {heroImageAlt.trim()}
+					</p>
+				)
+			}
 
 			<main class="article">
 				<!-- Wide screens: ToC (left, sticky) · article · AdSense (right). Narrower: article + ad, ToC inline. -->
