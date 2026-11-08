@@ -51,18 +51,41 @@ async function api(path: string, body?: unknown) {
 	}
 }
 
+// Views: one per device every 48 hours. When each post was last counted on this device
+// is kept in localStorage as { postId: time }; entries older than 48 hours are dropped.
+const VIEW_KEY = 'viewedPosts';
+const VIEW_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+function readViews(): Record<string, number> {
+	try {
+		const all = JSON.parse(localStorage.getItem(VIEW_KEY) ?? '{}') as Record<string, number>;
+		const now = Date.now();
+		return Object.fromEntries(Object.entries(all).filter(([, t]) => typeof t === 'number' && now - t < VIEW_WINDOW_MS));
+	} catch {
+		return {};
+	}
+}
+
 /**
- * Call once per post page: loads the live like count and records one view
- * per browser session (refreshing the page doesn't count again).
+ * Call once per post page: loads the live like count and records a view, at most
+ * once every 48 hours per device (refreshing or reopening the post doesn't count again).
  */
 export async function startPost(postId: string) {
 	if (started.has(postId)) return;
 	started.add(postId);
 
-	const viewKey = `viewed:${postId}`;
-	const firstVisit = !sessionStorage.getItem(viewKey);
-	const stats = firstVisit ? await api(`${postId}/view`, {}) : await api(`${postId}/stats`);
-	if (firstVisit && stats) sessionStorage.setItem(viewKey, '1');
+	const views = readViews();
+	// Only the live site counts views (local test builds and previews would inflate the numbers)
+	const liveSite = /(^|\.)joelgreen\.studio$/.test(location.hostname);
+	const countIt = liveSite && !(postId in views);
+	const stats = countIt ? await api(`${postId}/view`, {}) : await api(`${postId}/stats`);
+	if (countIt && stats) {
+		try {
+			localStorage.setItem(VIEW_KEY, JSON.stringify({ ...views, [postId]: Date.now() }));
+		} catch {
+			// storage blocked (some private modes): the view still counted once
+		}
+	}
 	if (stats) {
 		liveLikes.set(postId, stats.likes);
 		paintStats({ [postId]: stats }); // e.g. the view count in the post hero
