@@ -77,7 +77,13 @@ export async function startPost(postId: string) {
 	const views = readViews();
 	// Only the live site counts views (local test builds and previews would inflate the numbers)
 	const liveSite = /(^|\.)joelgreen\.studio$/.test(location.hostname);
-	const countIt = liveSite && !(postId in views);
+	let ownerDevice = false; // set by visiting any page with ?dontcount (BaseHead.astro)
+	try {
+		ownerDevice = localStorage.getItem('noViewCount') === '1';
+	} catch {
+		// storage blocked: count as normal
+	}
+	const countIt = liveSite && !ownerDevice && !(postId in views);
 	const stats = countIt ? await api(`${postId}/view`, {}) : await api(`${postId}/stats`);
 	if (countIt && stats) {
 		try {
