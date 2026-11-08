@@ -46,7 +46,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 					</p>
 				</div>
 			</header>
-			<p class="mx-auto !mb-0 w-full max-w-7xl px-4 pt-2 text-right text-[13px] italic text-muted-foreground sm:px-6" aria-hidden="true" data-p="photo" hidden></p>
+			<p class="mx-auto !mb-0 w-full max-w-7xl px-4 pt-2 text-right text-[13px] italic text-muted-foreground sm:px-6" data-p="photo" hidden></p>
 
 			<main class="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
 				<p class="!mb-8 font-heading text-[19px] leading-snug text-muted-foreground" data-p="excerpt" hidden></p>
@@ -78,6 +78,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 				content?: string | null;
 				coverImage?: string | null;
 				coverImageAlt?: string | null;
+				coverImageCredit?: string | null;
 				category?: string | null;
 				tags?: string[] | null;
 				status?: string;
@@ -118,7 +119,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 				cover.hidden = !p.coverImage;
 				if (p.coverImage && cover.getAttribute('src') !== p.coverImage) cover.src = p.coverImage;
 				cover.alt = p.coverImageAlt?.trim() || p.title;
-			const heroCaption = p.coverImage ? photoCaption(p.coverImageAlt) : null;
+			const heroCaption = p.coverImage ? photoCaption(p.coverImageCredit) : null;
 			$('photo').textContent = heroCaption ?? '';
 			$('photo').hidden = !heroCaption;
 				const excerpt = p.excerpt || p.subtitle;
@@ -130,12 +131,11 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 			$('body').querySelectorAll('p').forEach((para) => {
 				const only = para.children.length === 1 && !para.textContent?.trim() ? para.children[0] : null;
 				const img = only?.tagName === 'IMG' ? only : only?.tagName === 'A' && only.children.length === 1 && only.children[0].tagName === 'IMG' ? only.children[0] : null;
-				const caption = img && photoCaption(img.getAttribute('alt'));
+				const caption = img && photoCaption(img.getAttribute('title'));
 				if (!only || !caption) return;
 				const figure = document.createElement('figure');
 				figure.className = 'post-figure';
 				const figcaption = document.createElement('figcaption');
-				figcaption.setAttribute('aria-hidden', 'true');
 				figcaption.textContent = caption;
 				figure.append(only, figcaption);
 				para.replaceWith(figure);

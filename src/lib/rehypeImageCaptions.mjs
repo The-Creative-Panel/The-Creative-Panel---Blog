@@ -1,11 +1,13 @@
-// Photos in a post get a visible caption: "Photo: {alt text}".
-// An image on its own line (Markdown wraps it in a <p>) becomes
+// Photos in a post get a visible credit line: "Photo: {credit}".
+// The credit is the image's title (the "Title" box in the admin editor's image dialog,
+// or ![description](url "Jane Doe / Pexels") in Markdown); the alt text stays a description
+// for screen readers and image search. An image on its own line becomes
 //   <figure class="post-figure"><img …><figcaption>Photo: …</figcaption></figure>
-// Images without alt text, or sitting inside a sentence, are left as they are.
+// Images without a title, or sitting inside a sentence, are left as they are.
 
-/** The caption text for an alt text, or null when there's nothing to show */
-export const photoCaption = (alt) => {
-	const text = typeof alt === 'string' ? alt.trim() : '';
+/** The caption text for a credit, or null when there's nothing to show */
+export const photoCaption = (credit) => {
+	const text = typeof credit === 'string' ? credit.trim() : '';
 	return text ? `Photo: ${text}` : null;
 };
 
@@ -19,17 +21,13 @@ export default function rehypeImageCaptions() {
 			const parts = child.children.filter((n) => !isBlank(n));
 			// A lone image, or a lone linked image
 			const img = parts.length === 1 && (parts[0].tagName === 'img' ? parts[0] : parts[0].tagName === 'a' && parts[0].children?.length === 1 && parts[0].children[0].tagName === 'img' ? parts[0].children[0] : null);
-			const caption = img && photoCaption(img.properties?.alt);
+			const caption = img && photoCaption(img.properties?.title);
 			if (!caption) return visit(child);
 			node.children[i] = {
 				type: 'element',
 				tagName: 'figure',
 				properties: { className: ['post-figure'] },
-				children: [
-					parts[0],
-					// The image's alt text already describes it to screen readers, so they skip the repeat
-					{ type: 'element', tagName: 'figcaption', properties: { ariaHidden: 'true' }, children: [{ type: 'text', value: caption }] },
-				],
+				children: [parts[0], { type: 'element', tagName: 'figcaption', properties: {}, children: [{ type: 'text', value: caption }] }],
 			};
 		});
 	};

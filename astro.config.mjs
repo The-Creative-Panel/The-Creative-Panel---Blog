@@ -26,7 +26,7 @@ export default defineConfig({
 
   // SEO: '# Heading 1' in a post becomes h2 (the post title is the page's only h1)
   // Links leaving the site get rel="nofollow noopener" (see src/lib/rehypeNofollow.mjs)
-  // Photos with alt text get a "Photo: …" caption underneath (src/lib/rehypeImageCaptions.mjs)
+  // Photos with a title (credit) get a "Photo: …" line underneath (src/lib/rehypeImageCaptions.mjs)
   markdown: { remarkPlugins: [remarkDemoteH1], rehypePlugins: [rehypeNofollow, rehypeImageCaptions] },
 
   integrations: [mdx(), sitemap({
