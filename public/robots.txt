@@ -3,5 +3,7 @@ User-agent: *
 Allow: /
 # Data file for the site search box, not a page
 Disallow: /search.json
+# Draft previews (opened from the admin; private links)
+Disallow: /preview/
 
 Sitemap: https://joelgreen.studio/sitemap-index.xml

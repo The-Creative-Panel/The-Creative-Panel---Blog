@@ -1,0 +1,160 @@
+---
+// /preview/?token=…: shows a draft (or any post) exactly as it will look, before it's published.
+// The admin's Preview button opens this with a one-hour token; the page fetches the post from
+// the API in the browser and renders it with the blog's own post header and article styles.
+// Hidden from search engines, and blocked in robots.txt.
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE } from '../consts';
+
+const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Preview — ${SITE_TITLE}`} description="Draft preview." noindex />
+	</head>
+	<body>
+		<Header />
+
+		<!-- Preview banner: always visible, so a preview is never mistaken for the live post -->
+		<div class="sticky top-[56px] z-40 border-b border-brand-gold/40 bg-brand-gold text-black">
+			<div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2 text-[16px] sm:px-6">
+				<p class="!m-0 font-semibold">
+					Preview · <span data-preview-status>Loading…</span>
+				</p>
+				<p class="!m-0 opacity-80" data-preview-note>Not visible to readers.</p>
+			</div>
+		</div>
+
+		<article data-preview data-api={api} hidden>
+			<!-- Same hero as a real post (src/layouts/BlogPost.astro) -->
+			<header class="relative flex min-h-[340px] items-end overflow-hidden bg-brand-ink text-white md:min-h-[460px]">
+				<img data-p="cover" alt="" class="absolute inset-0 h-full w-full !rounded-none object-cover opacity-70" hidden />
+				<div class="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10"></div>
+				<div class="relative mx-auto w-full max-w-7xl px-4 pb-10 pt-24 sm:px-6">
+					<p class="label !mb-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px]" data-p="terms"></p>
+					<h1 class="!mb-5 max-w-3xl font-display !text-4xl font-medium uppercase !leading-[1] tracking-[-0.5px] !text-white sm:!text-5xl md:!text-[56px]" data-p="title"></h1>
+					<p class="label !m-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-[16px] text-white/65">
+						<span class="font-logo text-[16px] font-bold tracking-tight text-white">Joel Green<span class="text-brand-logo-accent">.</span></span>
+						<span aria-hidden="true">·</span>
+						<span data-p="date"></span>
+						<span aria-hidden="true">·</span>
+						<span data-p="read"></span>
+					</p>
+				</div>
+			</header>
+
+			<main class="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
+				<p class="!mb-8 font-heading text-[19px] leading-snug text-muted-foreground" data-p="excerpt" hidden></p>
+				<div class="prose article-body" data-p="body"></div>
+			</main>
+		</article>
+
+		<main class="mx-auto max-w-2xl px-4 py-24 text-center" data-preview-error hidden>
+			<h1 class="font-display !text-[40px] font-semibold uppercase">Preview unavailable</h1>
+			<p class="text-[16px] text-muted-foreground" data-p="error"></p>
+		</main>
+
+		<Footer />
+
+		<script>
+			// Two ways in:
+			//  - ?token=…   a saved post, fetched from the API (link copied in the admin; works for an hour)
+			//  - ?live      unsaved text sent from the admin's editor (Preview button); updates as you type.
+			//               Only accepted from the admin's own address (ADMIN_ORIGINS), since posts can contain HTML.
+			import { marked } from 'marked';
+			import { ADMIN_ORIGINS, SITE_TIMEZONE } from '../consts';
+			import { termLabel } from '../lib/taxonomy';
+
+			type PreviewPost = {
+				title: string;
+				subtitle?: string | null;
+				excerpt?: string | null;
+				content?: string | null;
+				coverImage?: string | null;
+				category?: string | null;
+				tags?: string[] | null;
+				status?: string;
+				publishedAt?: string | null;
+			};
+
+			const article = document.querySelector<HTMLElement>('[data-preview]')!;
+			const errorBox = document.querySelector<HTMLElement>('[data-preview-error]')!;
+			const status = document.querySelector<HTMLElement>('[data-preview-status]')!;
+			const note = document.querySelector<HTMLElement>('[data-preview-note]')!;
+			const $ = (k: string) => document.querySelector<HTMLElement>(`[data-p="${k}"]`)!;
+			const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+			const fail = (message: string) => {
+				status.textContent = 'not available';
+				$('error').textContent = message;
+				errorBox.hidden = false;
+				article.hidden = true;
+			};
+
+			/** Fill the page with a post, using the same pieces as a real post page */
+			function render(p: PreviewPost, label: string) {
+				document.title = `Preview: ${p.title || 'Untitled'} — The Creative Panel`;
+				status.textContent = label;
+				$('title').textContent = p.title || 'Untitled';
+				const tags = Array.isArray(p.tags) ? p.tags : [];
+				$('terms').innerHTML =
+					(p.category ? `<span class="border border-brand-teal-light/60 px-2 py-0.5 text-white">${esc(termLabel(p.category))}</span>` : '') +
+					tags.map((t) => `<span class="text-brand-teal-light">#${esc(termLabel(t))}</span>`).join('');
+				const when = p.publishedAt ? new Date(p.publishedAt) : null;
+				$('date').textContent =
+					when && !isNaN(+when)
+						? `${when > new Date() ? 'Scheduled for' : 'Posted'} ${when.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: SITE_TIMEZONE })}`
+						: 'Not scheduled yet';
+				const words = String(p.content ?? '').trim().split(/\s+/).filter(Boolean).length;
+				$('read').textContent = `${Math.max(1, Math.round(words / 230))} min read`;
+				const cover = $('cover') as HTMLImageElement;
+				cover.hidden = !p.coverImage;
+				if (p.coverImage && cover.getAttribute('src') !== p.coverImage) cover.src = p.coverImage;
+				cover.alt = p.title;
+				const excerpt = p.excerpt || p.subtitle;
+				$('excerpt').textContent = excerpt ?? '';
+				$('excerpt').hidden = !excerpt;
+				// "# Heading" becomes h2, like real posts (the title is the page's only h1)
+				$('body').innerHTML = (marked.parse(String(p.content ?? ''), { async: false }) as string).replace(/<(\/?)h1\b/g, '<$1h2');
+				errorBox.hidden = true;
+				article.hidden = false;
+			}
+
+			const params = new URLSearchParams(location.search);
+			// The admin tab that opened this one (or the page embedding it)
+			const editor = window.opener ?? (window.parent !== window ? window.parent : null);
+			const token = params.get('token');
+
+			if (token) {
+				// Saved version, from the API
+				note.textContent = 'Only people with this link can see it. It works for an hour after it was copied.';
+				fetch(`${article.dataset.api}/content/preview?token=${encodeURIComponent(token)}`, { cache: 'no-store' })
+					.then(async (res) => {
+						const data = await res.json().catch(() => ({}));
+						if (!res.ok) throw new Error(data.message || `Couldn't load the post (HTTP ${res.status}).`);
+						return data as PreviewPost;
+					})
+					.then((p) =>
+						render(p, p.status === 'PUBLISHED' ? 'published post (last saved version)' : p.status === 'ARCHIVED' ? 'archived, not on the site' : 'draft (last saved version)'),
+					)
+					.catch((e: Error) => fail(e.message));
+			} else if (params.has('live') && editor) {
+				// Unsaved text from the admin's editor: ask for it, then keep it in sync
+				note.textContent = 'Live from the editor: nothing is saved or published. Changes appear as you type.';
+				status.textContent = 'waiting for the editor…';
+				addEventListener('message', (e: MessageEvent) => {
+					if (!ADMIN_ORIGINS.includes(e.origin)) return; // only the admin may send post text
+					if (e.data?.type === 'preview-post' && e.data.post) render(e.data.post as PreviewPost, 'unsaved changes from the editor');
+				});
+				// Nothing sensitive in this message, so any admin address can receive it
+				for (const origin of ADMIN_ORIGINS) editor.postMessage({ type: 'preview-ready' }, origin);
+			} else {
+				fail('Open a preview from the post editor in the admin (Preview button).');
+			}
+		</script>
+	</body>
+</html>
