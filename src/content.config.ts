@@ -19,6 +19,7 @@ type ApiPost = {
 	excerpt: string | null;
 	content: string;
 	coverImage: string | null;
+	coverImageAlt?: string | null;
 	category: string | null;
 	tags: string[] | null;
 	featured: boolean;
@@ -49,6 +50,7 @@ const blog = defineCollection({
 				pubDate: p.publishedAt,
 				updatedDate: editedAfterPublish(p.publishedAt, p.updatedAt),
 				heroImage: p.coverImage ?? undefined,
+				heroImageAlt: p.coverImageAlt || undefined,
 				category: p.category ?? undefined,
 				tags: Array.isArray(p.tags) ? p.tags : [],
 				featured: p.featured,
@@ -67,6 +69,8 @@ const blog = defineCollection({
 			updatedDate: z.coerce.date().optional(),
 			// A URL (posts from the admin) or a local image file (Markdown posts)
 			heroImage: z.union([z.string().url(), image()]).optional(),
+			// What the hero image shows (alt text). Empty: the title is used
+			heroImageAlt: z.string().optional(),
 			category: z.string().default('Writing'), // magazine section
 			tags: z.array(z.string()).default([]),
 			featured: z.boolean().default(false), // shows in the "Featured" cards
