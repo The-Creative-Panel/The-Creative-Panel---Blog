@@ -63,9 +63,9 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
 		<script>
 			// Two ways in:
-			//  - ?token=…   a saved post, fetched from the API (link copied in the admin; works for an hour)
+			//  - #token=…   a saved post, fetched from the API (link copied in the admin; works for an hour)
 			//  - ?live      unsaved text sent from the admin's editor (Preview button); updates as you type.
-			//               Only accepted from the admin's own address (ADMIN_ORIGINS), since posts can contain HTML.
+			//               Only after a token handshake with the admin (below), since posts can contain HTML.
 			import { marked } from 'marked';
 			import { ADMIN_ORIGINS, SITE_TIMEZONE } from '../consts';
 			import { termLabel } from '../lib/taxonomy';
@@ -145,33 +145,68 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 			}
 
 			const params = new URLSearchParams(location.search);
-			// The admin tab that opened this one (or the page embedding it)
-			const editor = window.opener ?? (window.parent !== window ? window.parent : null);
-			const token = params.get('token');
+			const api = article.dataset.api;
+			/** POST JSON to the API; throws the API's message on failure */
+			const post = async (path: string, body: unknown) => {
+				const res = await fetch(`${api}${path}`, { method: 'POST', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+				const data = await res.json().catch(() => ({}));
+				if (!res.ok) throw new Error(data.message || `Couldn't load the preview (HTTP ${res.status}).`);
+				return data;
+			};
+			// Copied links carry the token after "#" (never sent to servers); older ?token= links still work
+			const token = new URLSearchParams(location.hash.slice(1)).get('token') ?? params.get('token');
+			// The admin window that opened this one (the Preview button)
+			const editor: Window | null = window.opener;
 
 			if (token) {
 				// Saved version, from the API
 				note.textContent = 'Only people with this link can see it. It works for an hour after it was copied.';
-				fetch(`${article.dataset.api}/content/preview?token=${encodeURIComponent(token)}`, { cache: 'no-store' })
-					.then(async (res) => {
-						const data = await res.json().catch(() => ({}));
-						if (!res.ok) throw new Error(data.message || `Couldn't load the post (HTTP ${res.status}).`);
-						return data as PreviewPost;
-					})
-					.then((p) =>
+				post('/content/preview', { token })
+					.then((p: PreviewPost) =>
 						render(p, p.status === 'PUBLISHED' ? 'published post (last saved version)' : p.status === 'ARCHIVED' ? 'archived, not on the site' : 'draft (last saved version)'),
 					)
 					.catch((e: Error) => fail(e.message));
 			} else if (params.has('live') && editor) {
-				// Unsaved text from the admin's editor: ask for it, then keep it in sync
+				// Unsaved text from the admin's editor, behind a handshake:
+				//  1. this page makes a one-time code and asks the admin window for proof
+				//  2. the admin answers with the code + a short token only a signed-in admin can get
+				//  3. the API confirms the token; only then is text accepted, and only from that window,
+				//     on an admin address, carrying the same code
 				note.textContent = 'Live from the editor: nothing is saved or published. Changes appear as you type.';
-				status.textContent = 'waiting for the editor…';
-				addEventListener('message', (e: MessageEvent) => {
-					if (!ADMIN_ORIGINS.includes(e.origin)) return; // only the admin may send post text
-					if (e.data?.type === 'preview-post' && e.data.post) render(e.data.post as PreviewPost, 'unsaved changes from the editor');
+				status.textContent = 'confirming with the admin…';
+				let nonce = '';
+				let trusted: string | null = null; // the admin address that passed the handshake
+				let pending: PreviewPost | null = null; // text that arrived while the token was being checked
+				let renewal = 0;
+
+				const handshake = () => {
+					nonce = crypto.randomUUID();
+					// The code is useless without a valid token, so any admin address may receive it
+					for (const origin of ADMIN_ORIGINS) editor.postMessage({ type: 'preview-ready', nonce }, origin);
+				};
+
+				addEventListener('message', async (e: MessageEvent) => {
+					if (e.source !== editor || !ADMIN_ORIGINS.includes(e.origin) || e.data?.nonce !== nonce) return;
+					if (e.data.type === 'preview-auth' && typeof e.data.token === 'string') {
+						try {
+							const { expiresAt } = await post('/content/preview/live/verify', { token: e.data.token });
+							trusted = e.origin;
+							// Ask for a fresh token a minute before this one runs out
+							clearTimeout(renewal);
+							renewal = window.setTimeout(handshake, Math.max(60_000, expiresAt - Date.now() - 60_000));
+							if (pending) render(pending, 'unsaved changes from the editor');
+							else status.textContent = 'waiting for the editor…';
+							pending = null;
+						} catch (err) {
+							trusted = null;
+							fail((err as Error).message);
+						}
+					} else if (e.data.type === 'preview-post' && e.data.post) {
+						if (trusted === e.origin) render(e.data.post as PreviewPost, 'unsaved changes from the editor');
+						else if (!trusted) pending = e.data.post as PreviewPost; // shown once the token checks out
+					}
 				});
-				// Nothing sensitive in this message, so any admin address can receive it
-				for (const origin of ADMIN_ORIGINS) editor.postMessage({ type: 'preview-ready' }, origin);
+				handshake();
 			} else {
 				fail('Open a preview from the post editor in the admin (Preview button).');
 			}
