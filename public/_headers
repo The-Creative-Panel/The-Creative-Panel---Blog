@@ -10,3 +10,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Draft preview page: never indexed, and preview links (which carry a token) aren't passed on to other sites
+/preview/*
+  X-Robots-Tag: noindex, nofollow
+  Referrer-Policy: no-referrer
