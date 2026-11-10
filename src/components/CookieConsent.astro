@@ -1,0 +1,182 @@
+---
+// Cookie banner: asks once, remembers the answer in localStorage ("cookieConsent") for a year,
+// and passes it to Google Consent Mode, which Analytics (via Tag Manager) and AdSense follow.
+// The starting permissions (before any answer) are set in BaseHead.astro.
+// Reopen it from anywhere with a button that has data-cookie-settings (the footer has one).
+---
+
+<section
+	class="cookie-banner fixed inset-x-0 bottom-0 z-[60] p-3 sm:p-4"
+	role="dialog"
+	aria-live="polite"
+	aria-labelledby="cookie-title"
+	aria-describedby="cookie-text"
+	data-cookie-banner
+	hidden
+>
+	<div class="mx-auto max-w-3xl border border-border bg-card p-5 text-card-foreground shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:p-6">
+		<h2 id="cookie-title" class="label !mb-2 !text-[16px] !font-semibold !text-foreground">Cookies on The Creative Panel</h2>
+		<p id="cookie-text" class="!mb-4 text-[15px] leading-relaxed text-muted-foreground">
+			Ads keep this site free, and Google Analytics shows me which writing people read. Both use cookies. Choose what you're happy with.
+			You can change it any time from <span class="whitespace-nowrap">"Cookie settings"</span> in the footer. <a href="/cookies">Cookie policy</a>.
+		</p>
+
+		<!-- Customize: one switch per kind of cookie -->
+		<fieldset class="!m-0 !mb-4 space-y-3 border-t border-border !p-0 pt-4" data-cookie-options hidden>
+			<legend class="sr-only">Choose cookies</legend>
+			<label class="flex items-start gap-3">
+				<input type="checkbox" checked disabled class="mt-1 size-4 accent-[var(--primary)]" />
+				<span class="text-[15px]">
+					<strong class="text-foreground">Essential</strong>
+					<span class="block text-muted-foreground">Your theme, likes and saved posts. Kept on your device only. Always on.</span>
+				</span>
+			</label>
+			<label class="flex items-start gap-3">
+				<input type="checkbox" name="analytics" class="mt-1 size-4 accent-[var(--primary)]" />
+				<span class="text-[15px]">
+					<strong class="text-foreground">Analytics</strong>
+					<span class="block text-muted-foreground">Google Analytics: which pages are read, roughly where from. Never your name.</span>
+				</span>
+			</label>
+			<label class="flex items-start gap-3">
+				<input type="checkbox" name="ads" class="mt-1 size-4 accent-[var(--primary)]" />
+				<span class="text-[15px]">
+					<strong class="text-foreground">Personalized ads</strong>
+					<span class="block text-muted-foreground">Google AdSense may tailor ads to your interests. Off: you still see ads, just not tailored ones.</span>
+				</span>
+			</label>
+		</fieldset>
+
+		<div class="flex flex-wrap items-center gap-2">
+			<button type="button" class="cookie-btn cookie-btn-primary" data-cookie="accept">Accept all</button>
+			<button type="button" class="cookie-btn cookie-btn-primary" data-cookie="reject">Reject optional</button>
+			<button type="button" class="cookie-btn cookie-btn-ghost" data-cookie="customize" aria-expanded="false">Customize</button>
+			<button type="button" class="cookie-btn cookie-btn-primary" data-cookie="save" hidden>Save my choices</button>
+		</div>
+	</div>
+</section>
+
+<script>
+	type Choice = { analytics: boolean; ads: boolean; at: number };
+	const KEY = 'cookieConsent';
+	const ASK_AGAIN_MS = 365 * 24 * 60 * 60 * 1000; // ask again after a year
+
+	const banner = document.querySelector<HTMLElement>('[data-cookie-banner]')!;
+	const options = banner.querySelector<HTMLFieldSetElement>('[data-cookie-options]')!;
+	const analytics = options.querySelector<HTMLInputElement>('[name=analytics]')!;
+	const ads = options.querySelector<HTMLInputElement>('[name=ads]')!;
+	const button = (name: string) => banner.querySelector<HTMLButtonElement>(`[data-cookie="${name}"]`)!;
+
+	const read = (): Choice | null => {
+		try {
+			const c = JSON.parse(localStorage.getItem(KEY) ?? 'null') as Choice | null;
+			return c && Date.now() - c.at < ASK_AGAIN_MS ? c : null;
+		} catch {
+			return null;
+		}
+	};
+
+	const gtag = (...args: unknown[]) => (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.(...args);
+	const on = (b: boolean) => (b ? 'granted' : 'denied');
+
+	function apply(choice: Omit<Choice, 'at'>) {
+		try {
+			localStorage.setItem(KEY, JSON.stringify({ ...choice, at: Date.now() }));
+		} catch {
+			// storage blocked: the choice still applies to this page
+		}
+		gtag('consent', 'update', {
+			analytics_storage: on(choice.analytics),
+			ad_storage: on(choice.ads),
+			ad_user_data: on(choice.ads),
+			ad_personalization: on(choice.ads),
+		});
+		close();
+	}
+
+	function setCustomizing(open: boolean) {
+		options.hidden = !open;
+		button('save').hidden = !open;
+		button('customize').hidden = open;
+		button('customize').setAttribute('aria-expanded', String(open));
+	}
+
+	let opener: HTMLElement | null = null;
+	function show(customize = false) {
+		const current = read();
+		analytics.checked = current?.analytics ?? false;
+		ads.checked = current?.ads ?? false;
+		setCustomizing(customize);
+		banner.hidden = false;
+	}
+	function close() {
+		banner.hidden = true;
+		opener?.focus();
+		opener = null;
+	}
+
+	button('accept').addEventListener('click', () => apply({ analytics: true, ads: true }));
+	button('reject').addEventListener('click', () => apply({ analytics: false, ads: false }));
+	button('customize').addEventListener('click', () => {
+		setCustomizing(true);
+		analytics.focus();
+	});
+	button('save').addEventListener('click', () => apply({ analytics: analytics.checked, ads: ads.checked }));
+	banner.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && read()) close(); // only once there's an answer to fall back on
+	});
+
+	// "Cookie settings" buttons (footer): reopen with the current choices showing
+	document.querySelectorAll<HTMLElement>('[data-cookie-settings]').forEach((el) =>
+		el.addEventListener('click', () => {
+			opener = el;
+			show(true);
+			analytics.focus();
+		}),
+	);
+
+	if (!read()) show();
+
+	// Visitors Google's own consent message already asks (AdSense "Privacy & messaging" in the EEA/UK)
+	// shouldn't get two banners: step aside when that message says GDPR applies.
+	addEventListener('load', () => {
+		const tcf = (window as unknown as { __tcfapi?: (cmd: string, v: number, cb: (d: { gdprApplies?: boolean }, ok: boolean) => void) => void }).__tcfapi;
+		tcf?.('addEventListener', 2, (data, ok) => {
+			if (ok && data?.gdprApplies && !read()) banner.hidden = true;
+		});
+	});
+</script>
+
+<style>
+	.cookie-btn {
+		font-family: var(--font-display);
+		font-size: 16px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		padding: 0.6rem 1.1rem;
+		border: 1px solid var(--border);
+		cursor: pointer;
+	}
+	/* Accept and Reject look the same on purpose: neither choice is nudged */
+	.cookie-btn-primary {
+		background: var(--primary);
+		border-color: var(--primary);
+		color: var(--primary-foreground);
+	}
+	.cookie-btn-primary:hover {
+		opacity: 0.9;
+	}
+	.cookie-btn-ghost {
+		background: transparent;
+		color: var(--foreground);
+	}
+	.cookie-btn-ghost:hover {
+		border-color: var(--primary);
+		color: var(--primary);
+	}
+	.cookie-btn:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+</style>

@@ -18,6 +18,7 @@ import MostRead from '../components/home/MostRead.astro';
 import PostList from '../components/home/PostList.astro';
 import PostRow from '../components/home/PostRow.astro';
 import SectionTitle from '../components/home/SectionTitle.astro';
+import PostingSchedule from '../components/PostingSchedule.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { sortByDate } from '../lib/posts';
 import { tagIndex } from '../lib/taxonomy';
@@ -152,6 +153,8 @@ const alsoLike = rank('views').filter((p) => !featured.includes(p)).slice(0, 3);
 			<aside class="order-3 flex flex-col gap-6">
 				<AboutCard />
 				<PressContactCards />
+				<!-- When new posts go out (POSTING_SCHEDULE in consts.ts) -->
+				<PostingSchedule />
 				<!-- AdSense: right sidebar -->
 				<AdSlot slot={import.meta.env.PUBLIC_ADSENSE_SLOT_HOME_SIDEBAR} format="vertical" minHeight={600} small />
 				<!-- Sticky on desktop once you scroll past the cards above -->

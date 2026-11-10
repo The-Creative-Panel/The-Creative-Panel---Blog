@@ -1,0 +1,88 @@
+---
+// The posting schedule (POSTING_SCHEDULE in consts.ts), plus when the next post is due.
+//   <PostingSchedule />                 card for the homepage's right column
+//   <PostingSchedule variant="line" />  one line (footer)
+// The schedule itself is plain HTML; "Next post: …" is filled in by the browser, in the reader's time too.
+import { POSTING_SCHEDULE, SITE_TIMEZONE } from '../consts';
+import SectionTitle from './home/SectionTitle.astro';
+
+interface Props {
+	variant?: 'card' | 'line';
+	class?: string;
+}
+const { variant = 'card', class: className } = Astro.props;
+const { daysLabel, timeLabel } = POSTING_SCHEDULE;
+const config = JSON.stringify({ ...POSTING_SCHEDULE, tz: SITE_TIMEZONE });
+---
+
+{
+	variant === 'line' ? (
+		<p class:list={['text-[16px] text-muted-foreground', className]}>
+			New posts {daysLabel} at {timeLabel}. <span data-next-post={config} />
+		</p>
+	) : (
+		<div class={className}>
+			<SectionTitle small>Posting Schedule</SectionTitle>
+			<div class="border border-border bg-card p-5">
+				<div class="mb-3 flex items-center gap-2.5">
+					<svg class="h-5 w-5 shrink-0 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<rect x="3" y="4" width="18" height="18" rx="1" />
+						<path d="M16 2v4M8 2v4M3 10h18" />
+					</svg>
+					<p class="!m-0 font-display text-[10px] font-semibold uppercase tracking-[-0.2px]">New posts</p>
+				</div>
+				<p class="!mb-1 text-[10px] font-semibold text-foreground">{daysLabel}</p>
+				<p class="!mb-3 text-[10px] text-muted-foreground">at {timeLabel}</p>
+				<p class="!m-0 border-t border-border pt-3 text-[10px] text-muted-foreground" data-next-post={config} />
+			</div>
+		</div>
+	)
+}
+
+<script>
+	type Schedule = { days: number[]; hour: number; tz: string };
+
+	/** A time zone's date parts for an instant */
+	function partsIn(tz: string, at: Date) {
+		const p = Object.fromEntries(
+			new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', weekday: 'short' })
+				.formatToParts(at)
+				.map((x) => [x.type, x.value]),
+		);
+		const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(p.weekday);
+		return { y: +p.year, m: +p.month, d: +p.day, hour: +p.hour, minute: +p.minute, weekday };
+	}
+
+	/** The instant when it's y-m-d hour:00 in a time zone (handles daylight saving) */
+	function instantIn(tz: string, y: number, m: number, d: number, hour: number) {
+		let guess = Date.UTC(y, m - 1, d, hour);
+		for (let i = 0; i < 2; i++) {
+			const p = partsIn(tz, new Date(guess));
+			const shownAsUtc = Date.UTC(p.y, p.m - 1, p.d, p.hour, p.minute);
+			guess -= shownAsUtc - Date.UTC(y, m - 1, d, hour);
+		}
+		return new Date(guess);
+	}
+
+	/** When the next scheduled post goes out */
+	function nextPost({ days, hour, tz }: Schedule, now = new Date()) {
+		const today = partsIn(tz, now);
+		for (let i = 0; i < 8; i++) {
+			if (!days.includes((today.weekday + i) % 7)) continue;
+			const at = instantIn(tz, today.y, today.m, today.d + i, hour);
+			if (at > now) return at;
+		}
+		return null;
+	}
+
+	const readerTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	document.querySelectorAll<HTMLElement>('[data-next-post]').forEach((el) => {
+		const schedule = JSON.parse(el.dataset.nextPost!) as Schedule;
+		const at = nextPost(schedule);
+		if (!at) return;
+		const day = (tz: string) => at.toLocaleDateString('en-US', { timeZone: tz, weekday: 'long', month: 'short', day: 'numeric' });
+		const time = (tz: string) => at.toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+		const sameAsSite = time(readerTz) === time(schedule.tz) || ['America/Chicago', 'America/New_York'].includes(readerTz);
+		el.textContent = `Next post: ${day(schedule.tz)}` + (sameAsSite ? '.' : ` (${day(readerTz)}, ${time(readerTz)} your time).`);
+	});
+</script>

@@ -46,6 +46,24 @@ const jsonLd = noindex ? null : JSON.stringify(graph(...schema)).replace(/</g, '
 <script is:inline>
 	if (localStorage.getItem("theme") === "dark") document.documentElement.classList.add("dark");
 </script>
+<!-- Cookie consent (Google Consent Mode v2). Runs before AdSense and Tag Manager so they start with
+     the right permissions. The banner that changes them is src/components/CookieConsent.astro.
+       - EEA, UK, Switzerland: analytics + personalized ads stay off until the visitor opts in
+       - everywhere else: on, until the visitor opts out (or their browser sends Global Privacy Control) -->
+<script is:inline>
+	(function () {
+		window.dataLayer = window.dataLayer || [];
+		window.gtag = window.gtag || function () { dataLayer.push(arguments); };
+		var on = function (b) { return b ? "granted" : "denied"; };
+		var gpc = navigator.globalPrivacyControl === true;
+		var optIn = ["AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IS","IE","IT","LV","LI","LT","LU","MT","NL","NO","PL","PT","RO","SK","SI","ES","SE","GB","CH"];
+		gtag("consent", "default", { ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied", analytics_storage: "denied", region: optIn, wait_for_update: 500 });
+		gtag("consent", "default", { ad_storage: "granted", ad_user_data: on(!gpc), ad_personalization: on(!gpc), analytics_storage: "granted" });
+		var choice = null;
+		try { choice = JSON.parse(localStorage.getItem("cookieConsent") || "null"); } catch (e) {}
+		if (choice) gtag("consent", "update", { analytics_storage: on(choice.analytics), ad_storage: on(choice.ads), ad_user_data: on(choice.ads), ad_personalization: on(choice.ads) });
+	})();
+</script>
 <!-- Owner's devices: open any page with ?dontcount and this device stops counting post views
      (src/lib/reactions.ts); ?count turns counting back on. -->
 <script is:inline>
@@ -105,9 +123,7 @@ const jsonLd = noindex ? null : JSON.stringify(graph(...schema)).replace(/</g, '
 	gtmId && (
 		<>
 			<script is:inline define:vars={{ gtmId }}>
-				window.dataLayer = window.dataLayer || [];
-				function gtag() { dataLayer.push(arguments); }
-				window.gtag = gtag;
+				// dataLayer + gtag() were set up by the consent script above
 				gtag("js", new Date());
 				// The start event GTM's "All pages" trigger listens for
 				dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });

@@ -1,5 +1,7 @@
 ---
 import { relFor } from '../lib/rehypeNofollow.mjs';
+import CookieConsent from './CookieConsent.astro';
+import PostingSchedule from './PostingSchedule.astro';
 // Site footer (prototype structure): logo + bio | Navigate | More | Legal | Connect,
 // then a newsletter sign-up, then the copyright line.
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
@@ -81,6 +83,10 @@ const connect = [
 								</li>
 							))
 						}
+						<li class="list-none">
+							<!-- Reopens the cookie banner (CookieConsent.astro) -->
+							<button type="button" data-cookie-settings class="cursor-pointer text-left text-[16px] text-foreground/80 hover:text-primary">Cookie settings</button>
+						</li>
 					</ul>
 				</nav>
 				<div>
@@ -112,7 +118,8 @@ const connect = [
 				>
 				<p class="label !m-0 !text-[16px] font-semibold text-foreground">Newsletter</p>
 			</div>
-			<p class="!mb-4 text-[16px] text-muted-foreground">New chapters, writing notes &amp; behind-the-scenes. No noise.</p>
+			<p class="!mb-2 text-[16px] text-muted-foreground">New chapters, writing notes &amp; behind-the-scenes. No noise.</p>
+			<PostingSchedule variant="line" class="!mb-4" />
 			<form class="flex w-full" data-newsletter data-api={apiUrl}>
 				<label for="footer-email" class="sr-only">Email address</label>
 				<input
@@ -145,6 +152,8 @@ const connect = [
 		</div>
 	</div>
 </footer>
+
+<CookieConsent />
 
 <script>
 	import { initNewsletterForms } from '../lib/newsletter';

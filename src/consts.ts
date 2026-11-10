@@ -11,3 +11,14 @@ export const SITE_TIMEZONE = 'America/Chicago';
 // Where the admin runs. The draft preview page (/preview/) only accepts unsaved post text
 // sent from these addresses. Add the admin's address here when it moves off this computer.
 export const ADMIN_ORIGINS = ['http://localhost:4323', 'http://127.0.0.1:4323'];
+
+/**
+ * When new posts go out (shown on the homepage and in the footer: PostingSchedule.astro).
+ * days: 0 = Sunday … 6 = Saturday. hour: 24-hour clock in SITE_TIMEZONE.
+ */
+export const POSTING_SCHEDULE = {
+	days: [1, 3, 5],
+	hour: 13,
+	daysLabel: 'Mondays, Wednesdays & Fridays',
+	timeLabel: '1 PM CT / 2 PM ET',
+};
