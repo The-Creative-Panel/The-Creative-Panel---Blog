@@ -5,6 +5,7 @@
 // so clicking either one updates both.
 
 import { paintStats } from './liveStats';
+import { detectSource } from './viewSource';
 
 type Kind = 'like' | 'save';
 const KEYS: Record<Kind, string> = { like: 'likedPosts', save: 'savedPosts' };
@@ -84,7 +85,8 @@ export async function startPost(postId: string) {
 		// storage blocked: count as normal
 	}
 	const countIt = liveSite && !ownerDevice && !(postId in views);
-	const stats = countIt ? await api(`${postId}/view`, {}) : await api(`${postId}/stats`);
+	// The view carries where it came from (src/lib/viewSource.ts), for the admin's "views by source"
+	const stats = countIt ? await api(`${postId}/view`, detectSource()) : await api(`${postId}/stats`);
 	if (countIt && stats) {
 		try {
 			localStorage.setItem(VIEW_KEY, JSON.stringify({ ...views, [postId]: Date.now() }));

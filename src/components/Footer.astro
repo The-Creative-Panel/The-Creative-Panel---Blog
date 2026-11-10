@@ -157,7 +157,9 @@ const connect = [
 
 <script>
 	import { initNewsletterForms } from '../lib/newsletter';
+	import { rememberEntry } from '../lib/viewSource';
 	initNewsletterForms();
+	rememberEntry(); // where this visit started, credited to posts opened later (views by source)
 </script>
 
 <style>

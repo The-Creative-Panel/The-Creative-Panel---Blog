@@ -8,11 +8,14 @@ interface Props {
 	/** Like count from the API, once it exists. 0 for now. */
 	likeCount?: number;
 }
+import { taggedUrl } from '../../lib/viewSource';
 const { postId, title, url, likeCount = 0 } = Astro.props;
-const tweetUrl = `https://x.com/intent/post?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
+// Share links carry UTM tags (src/lib/viewSource.ts), so views from them show by source in the admin
+const tweetUrl = `https://x.com/intent/post?text=${encodeURIComponent(title)}&url=${encodeURIComponent(taggedUrl(url, 'x'))}`;
+const copyUrl = taggedUrl(url, 'copied-link');
 ---
 
-<div class="post-reactions mt-12 hidden items-center justify-between gap-6 border-t border-border pt-10 md:flex" data-post-id={postId} data-url={url} data-likes={likeCount}>
+<div class="post-reactions mt-12 hidden items-center justify-between gap-6 border-t border-border pt-10 md:flex" data-post-id={postId} data-url={copyUrl} data-likes={likeCount}>
 	<div class="flex items-center gap-5">
 		<p class="!m-0 text-[16px] text-muted-foreground">Did you enjoy this piece?</p>
 		<button type="button" class="like-btn" data-like aria-pressed="false" aria-label="Like this post">
