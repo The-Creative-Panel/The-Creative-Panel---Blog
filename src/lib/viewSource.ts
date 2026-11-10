@@ -4,6 +4,7 @@
 //   1. UTM tags on the link (?utm_source=x&utm_medium=social), from:
 //        - the admin's "Copy share link" (utm_medium=social)      → channel "post"  (your own social posts)
 //        - the share buttons on posts   (utm_medium=share)        → channel "share" (readers sharing)
+//        - the RSS feed's links      (utm_medium=feed)          → channel "rss"
 //   2. Otherwise the site the visitor came from (document.referrer)  → "search", "rss" or "link"
 //   3. Otherwise "direct" (typed, bookmarked, or an app that hides where it came from)
 // Nothing about the visitor is sent: only a source name like "x" and the channel.
@@ -61,7 +62,10 @@ function sourceOfThisPage(url: URL, referrer: string): ViewSource | null {
 	const utmSource = url.searchParams.get('utm_source')?.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
 	if (utmSource) {
 		const source = ALIASES[utmSource] ?? utmSource;
-		const channel: Channel = url.searchParams.get('utm_medium')?.toLowerCase() === UTM_MEDIUM.owner ? 'post' : 'share';
+		const medium = url.searchParams.get('utm_medium')?.toLowerCase();
+		// Links in the RSS feed (src/pages/rss.xml.js) carry utm_medium=feed
+		if (medium === 'feed') return { source: 'rss', channel: 'rss' };
+		const channel: Channel = medium === UTM_MEDIUM.owner ? 'post' : 'share';
 		// A plain "Copy link": the site it was pasted on is the useful part, when the browser says
 		if (source === 'copied-link' && fromSite) return { source: fromSite.source, channel };
 		return { source, channel };
