@@ -1,4 +1,20 @@
 # The Creative Panel (joelgreen.studio)
+# Cloudflare adds its own managed rules above this file (AI-training crawlers). The groups below
+# name Google's crawlers directly: a crawler follows the group with its own name over "*", so
+# Search (Googlebot) and AdSense (Mediapartners-Google) always get exactly these rules.
+
+User-agent: Googlebot
+User-agent: Googlebot-Image
+User-agent: Bingbot
+Allow: /
+Disallow: /search.json
+Disallow: /preview/
+
+# AdSense reads every page it shows ads on, so it may crawl everything
+User-agent: Mediapartners-Google
+User-agent: AdsBot-Google
+Allow: /
+
 User-agent: *
 Allow: /
 # Data file for the site search box, not a page

@@ -95,6 +95,9 @@ const schema = [
 		<!-- Reading progress: filled by the script at the bottom -->
 		<div class="reading-progress" aria-hidden="true"><span></span></div>
 
+		<!-- The article element holds only this post (title, hero, text), so ad and search crawlers read its
+		     topic cleanly; related posts and comments come after it, inside the same main element. -->
+		<main class="post-page">
 		<article>
 			<!-- Hero: full-bleed image with the title overlaid -->
 			<header class="relative flex min-h-[340px] items-end overflow-hidden bg-brand-ink text-white md:min-h-[460px]">
@@ -162,7 +165,7 @@ const schema = [
 				)
 			}
 
-			<main class="article">
+			<div class="article">
 				<!-- Wide screens: ToC (left, sticky) · article · AdSense (right). Narrower: article + ad, ToC inline. -->
 				<div class="article-grid">
 				{
@@ -237,12 +240,16 @@ const schema = [
 					<AdSlot slot={import.meta.env.PUBLIC_ADSENSE_SLOT_POST_SIDEBAR} format="vertical" minHeight={600} class="sticky top-[80px]" />
 				</div>
 				</div>
-
-				<RelatedCards posts={relatedCards} />
-				<AlsoLike posts={alsoLike} />
-				<Comments slug={post.id} />
-			</main>
+			</div>
 		</article>
+
+		<!-- After the post: other posts and the conversation (outside the article element) -->
+		<div class="article article-after">
+			<RelatedCards posts={relatedCards} />
+			<AlsoLike posts={alsoLike} />
+			<Comments slug={post.id} />
+		</div>
+		</main>
 
 		<Footer />
 
@@ -305,10 +312,21 @@ const schema = [
 		</script>
 
 		<style>
-			main.article {
+			/* The page's <main>: full width (the hero is full-bleed); .article boxes inside set the width */
+			main.post-page {
+				width: 100%;
+				max-width: none;
+				margin: 0;
+				padding: 0;
+			}
+			.article {
 				width: 100%;
 				max-width: 80rem;
+				margin-inline: auto;
 				padding: 2rem 1rem 4rem;
+			}
+			.article-after {
+				padding-top: 0;
 			}
 			.article-grid {
 				display: grid;
@@ -353,7 +371,7 @@ const schema = [
 				scroll-margin-top: calc(var(--header-h, 57px) + 1.5rem);
 			}
 			@media (min-width: 640px) {
-				main.article {
+				.article {
 					padding-inline: 1.5rem;
 				}
 			}
