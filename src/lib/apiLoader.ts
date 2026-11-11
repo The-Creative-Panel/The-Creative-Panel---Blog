@@ -2,6 +2,7 @@
 // If PUBLIC_API_URL isn't set, it falls back to the local loader (Markdown/JSON
 // files in src/), so the blog still builds without the API.
 import type { Loader, LoaderContext } from 'astro/loaders';
+import { fetchApiJson } from './fetchApi';
 
 const API = (import.meta.env.PUBLIC_API_URL ?? process.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
@@ -25,9 +26,8 @@ export function apiLoader<T>({ name, path, map, fallback }: Options<T>): Loader 
 			}
 			let items: T[];
 			try {
-				const res = await fetch(API + path, { signal: AbortSignal.timeout(15_000) });
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				items = (await res.json()) as T[];
+				// Retries a stalled or failed request (src/lib/fetchApi.ts)
+				items = await fetchApiJson<T[]>(API + path, (msg) => ctx.logger.warn(msg));
 			} catch (e) {
 				// Fail loudly: publishing a site with missing content is worse than a failed build
 				throw new Error(`Couldn't load ${name} from ${API}${path} (${(e as Error).message}). Is the API running?`);

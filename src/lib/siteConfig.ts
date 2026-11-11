@@ -4,6 +4,7 @@
 // fails because of navigation.
 import { CATEGORY_BLURBS } from '../data/categories';
 import { termLabel } from './taxonomy';
+import { fetchApiJson } from './fetchApi';
 
 export type NavItem = { label: string; href: string; description: string };
 export type NavLink = { label: string; href: string } | { label: string; items: NavItem[] };
@@ -42,8 +43,8 @@ const API = (import.meta.env.PUBLIC_API_URL ?? process.env.PUBLIC_API_URL ?? '')
 async function get<T>(path: string): Promise<T | null> {
 	if (!API) return null;
 	try {
-		const res = await fetch(API + path, { signal: AbortSignal.timeout(15_000) });
-		return res.ok ? ((await res.json()) as T) : null;
+		// Retries a stalled request first, so a slow moment doesn't publish the default navbar
+		return await fetchApiJson<T>(API + path, (msg) => console.warn(`[navigation] ${msg}`));
 	} catch {
 		return null;
 	}
