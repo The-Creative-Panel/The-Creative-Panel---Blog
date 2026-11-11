@@ -135,15 +135,73 @@
 		}),
 	);
 
-	if (!read()) show();
+	// ---- Google's own consent messages (AdSense → Privacy & messaging) -------------------------
+	// Google asks visitors itself where a privacy law applies:
+	//   - EEA / UK / Switzerland: "European regulations" message, signalled through the TCF API (__tcfapi)
+	//   - US states with privacy laws: "US state regulations" message, signalled through the GPP API (__gpp)
+	// Those visitors shouldn't get two prompts, so this banner steps aside for them. It's remembered
+	// (GOOGLE_KEY) so the banner doesn't flash on every page before Google's tool loads; each visit
+	// checks again, so someone who travels gets the right one. "Cookie settings" still opens this banner.
+	const GOOGLE_KEY = 'cookieConsentByGoogle';
+	type W = {
+		__tcfapi?: (cmd: string, v: number, cb: (d: { gdprApplies?: boolean }, ok: boolean) => void) => void;
+		__gpp?: (cmd: string, cb: (e: { pingData?: { applicableSections?: number[] } }, ok: boolean) => void) => void;
+	};
+	const googleAsked = () => {
+		try {
+			return localStorage.getItem(GOOGLE_KEY) === '1';
+		} catch {
+			return false;
+		}
+	};
+	const setGoogleAsked = (yes: boolean) => {
+		try {
+			if (yes) localStorage.setItem(GOOGLE_KEY, '1');
+			else localStorage.removeItem(GOOGLE_KEY);
+		} catch {
+			// storage blocked: decided again on each page
+		}
+	};
+	let googleHandles = false;
+	function stepAside() {
+		if (googleHandles) return;
+		googleHandles = true;
+		setGoogleAsked(true);
+		if (!opener) banner.hidden = true; // unless the visitor opened it from "Cookie settings"
+	}
 
-	// Visitors Google's own consent message already asks (AdSense "Privacy & messaging" in the EEA/UK)
-	// shouldn't get two banners: step aside when that message says GDPR applies.
+	if (!read() && !googleAsked()) show();
+
+	// Google's tool loads with the AdSense script, sometimes a few seconds after the page: keep checking
 	addEventListener('load', () => {
-		const tcf = (window as unknown as { __tcfapi?: (cmd: string, v: number, cb: (d: { gdprApplies?: boolean }, ok: boolean) => void) => void }).__tcfapi;
-		tcf?.('addEventListener', 2, (data, ok) => {
-			if (ok && data?.gdprApplies && !read()) banner.hidden = true;
-		});
+		const w = window as unknown as W;
+		let tcfDone = false;
+		let gppDone = false;
+		const started = Date.now();
+		const check = () => {
+			if (!tcfDone && w.__tcfapi) {
+				tcfDone = true;
+				w.__tcfapi('addEventListener', 2, (data, ok) => {
+					if (ok && data?.gdprApplies) stepAside();
+				});
+			}
+			if (!gppDone && w.__gpp) {
+				gppDone = true;
+				w.__gpp('addEventListener', (evt, ok) => {
+					// applicableSections lists the privacy laws Google's message covers here; [-1] or [] = none
+					const sections = evt?.pingData?.applicableSections ?? [];
+					if (ok && sections.some((s) => s > 0)) stepAside();
+				});
+			}
+			if (googleHandles) return;
+			if (Date.now() - started < 10_000) setTimeout(check, 500);
+			else if (googleAsked()) {
+				// Remembered from before, but no Google message applies on this visit: ask here instead
+				setGoogleAsked(false);
+				if (!read()) show();
+			}
+		};
+		check();
 	});
 </script>
 

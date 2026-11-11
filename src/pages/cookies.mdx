@@ -20,15 +20,17 @@ Cookies are small files a website stores in your browser. "Local storage" is a s
 | `viewedPosts` | When you last opened each post, so a view is counted at most once every 48 hours | 48 hours per post |
 | `noViewCount` | Only set on the site owner's own devices, so their visits don't add to view counts | Until you clear it |
 | `cookieConsent` | Your cookie choices from the banner, so you aren't asked on every page | 12 months, then you're asked again |
+| `cookieConsentByGoogle` | Notes that Google's consent message covers your region, so this site's banner doesn't ask as well | Until you clear it; checked again on each visit |
 
 These are needed for the features you use, so they don't require consent.
 
 ## Your choices
 
-When you first visit, a banner asks which optional cookies you allow: **analytics** and **personalized ads**. Essential storage (the list above) is always on.
+When you first visit, you're asked which optional cookies you allow: **analytics** and **personalized ads**. Essential storage (the list above) is always on.
 
-- **In the EEA, UK and Switzerland**, analytics and personalized ads stay off until you turn them on.
-- **Everywhere else**, they're on until you turn them off. If your browser sends a [Global Privacy Control](https://globalprivacycontrol.org) signal, personalized ads start off.
+- **In the EEA, UK and Switzerland**, Google's consent message asks you, and analytics and personalized ads stay off until you turn them on.
+- **In US states with consumer privacy laws**, Google's message lets you opt out of the sale or sharing of your personal information for ads.
+- **Everywhere else**, this site's own banner asks. Analytics and personalized ads are on until you turn them off; if your browser sends a [Global Privacy Control](https://globalprivacycontrol.org) signal, personalized ads start off.
 - **Change your mind any time** with **Cookie settings** in the footer of every page.
 
 Your choice is passed to Google through Google Consent Mode, which Google Analytics and Google AdSense both follow.
