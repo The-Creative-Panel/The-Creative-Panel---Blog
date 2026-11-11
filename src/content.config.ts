@@ -105,6 +105,8 @@ const books = defineCollection({
 		sortOrder: z.number().default(0),
 		status: z.string().optional(),
 		wordCount: z.number().default(0),
+		/** When wordCount last changed (shown under the progress bar) */
+		wordCountUpdatedAt: z.coerce.date().optional(),
 		targetWordCount: z.number().optional(),
 	}),
 });
