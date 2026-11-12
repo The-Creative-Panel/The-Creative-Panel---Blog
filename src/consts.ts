@@ -4,7 +4,7 @@
 export const SITE_TITLE = 'The Creative Panel';
 export const SITE_DESCRIPTION = 'The Writings of Joel Green';
 /** Footer: what the blog is, in one line (the header already shows the tagline, the About card the bio) */
-export const SITE_BLURB = 'Essays on worldbuilding, characters and the making of a first novel.';
+export const SITE_BLURB = "A home for Joel Green's writing updates, and a panel for creatives who want to build dynamic characters and deep worldbuilding."; // Joel's own words (welcome post)
 /** The newsletter pitch, used everywhere there's a signup */
 export const NEWSLETTER_PITCH = 'New chapters, writing notes & behind-the-scenes. No noise.';
 
