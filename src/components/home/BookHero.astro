@@ -1,4 +1,5 @@
 ---
+import { sizedImageUrl } from '../../lib/imageUrl';
 import { relFor } from '../../lib/rehypeNofollow.mjs';
 import { SITE_TIMEZONE } from '../../consts';
 import type { CollectionEntry } from 'astro:content';
@@ -20,7 +21,7 @@ const countUpdated = b.wordCountUpdatedAt?.toLocaleDateString('en-US', { month: 
 	<!-- Background: the cover art, dimmed (or a soft teal glow when there's no cover yet) -->
 	{
 		b.coverImage ? (
-			<img src={b.coverImage} alt="" class="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-sm" aria-hidden="true" />
+			<img src={sizedImageUrl(b.coverImage, 800)} alt="" class="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-sm" aria-hidden="true" />
 		) : (
 			<div
 				class="pointer-events-none absolute inset-0"
@@ -35,7 +36,7 @@ const countUpdated = b.wordCountUpdatedAt?.toLocaleDateString('en-US', { month: 
 		<!-- Cover -->
 		{
 			b.coverImage ? (
-				<img src={b.coverImage} alt={`${b.title} cover`} class="aspect-[2/3] w-36 object-cover shadow-2xl md:w-full" />
+				<img src={sizedImageUrl(b.coverImage, 400)} alt={`${b.title} cover`} class="aspect-[2/3] w-36 object-cover shadow-2xl md:w-full" />
 			) : (
 				<div class="flex aspect-[2/3] w-36 flex-col justify-between border border-white/10 bg-gradient-to-b from-[#123d3f] via-[#0b1f20] to-black p-4 shadow-2xl md:w-full">
 					<span class="label text-[16px] text-white/50">{b.series}</span>

@@ -1,6 +1,7 @@
 ---
 // Article layout, modeled on the Ink & Insight prototype's post page.
 // [...slug].astro renders each post's Markdown into the <slot />.
+import { sizedImageUrl } from '../lib/imageUrl';
 import type { MarkdownHeading } from 'astro';
 import PostImage from '../components/PostImage.astro';
 import BaseHead from '../components/BaseHead.astro';
@@ -47,7 +48,7 @@ const { likes, views } = await getStats(post.id);
 
 // Structured data: Google reads this for article rich results (date, author, image)
 const postPath = `/blog/${post.id}/`;
-const coverUrl = heroImage ? abs(typeof heroImage === 'string' ? heroImage : heroImage.src) : abs('/og-default.png');
+const coverUrl = heroImage ? abs(typeof heroImage === 'string' ? sizedImageUrl(heroImage, 1200) : heroImage.src) : abs('/og-default.png');
 const schema = [
 	{
 		'@type': 'BlogPosting',

@@ -6,6 +6,7 @@
 // sized to fit the space, instead of an empty box.
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
+import { sizedImageUrl, sizedSrcset } from '../lib/imageUrl';
 import { termLabel } from '../lib/taxonomy';
 
 interface Props {
@@ -22,6 +23,10 @@ interface Props {
 const { src, alt = '', width, height, class: className, priority = false, fallback } = Astro.props;
 const loading = priority ? 'eager' : 'lazy';
 const fetchpriority = priority ? 'high' : undefined;
+// Covers from Pexels/Unsplash: ask for the size it's shown at, not the multi-MB original (src/lib/imageUrl.ts)
+const shown = width ?? 1200;
+const urlSrc = typeof src === 'string' ? sizedImageUrl(src, shown) : undefined;
+const urlSrcset = typeof src === 'string' ? sizedSrcset(src, shown) : undefined;
 ---
 
 {
@@ -32,7 +37,7 @@ const fetchpriority = priority ? 'high' : undefined;
 			</div>
 		)
 	) : typeof src === 'string' ? (
-		<img src={src} alt={alt} width={width} height={height} class={className} loading={loading} fetchpriority={fetchpriority} decoding="async" />
+		<img src={urlSrc} srcset={urlSrcset} alt={alt} width={width} height={height} class={className} loading={loading} fetchpriority={fetchpriority} decoding="async" />
 	) : (
 		<Image src={src} alt={alt} width={width} height={height} class={className} loading={loading} fetchpriority={fetchpriority} />
 	)

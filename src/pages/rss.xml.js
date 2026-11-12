@@ -1,5 +1,6 @@
 import { getCollection } from 'astro:content';
 import rss from '@astrojs/rss';
+import { sizedImageUrl } from '../lib/imageUrl';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 /** Escape text for use inside an XML attribute or element */
@@ -24,7 +25,7 @@ export async function GET(context) {
 			const { heroImage, heroImageAlt, heroImageCredit, title } = post.data;
 			const credit = heroImage && heroImageCredit?.trim() ? `<media:credit>${xml(heroImageCredit.trim())}</media:credit>` : '';
 			// Cover image (a URL from the admin, or a local file), else the branded share card
-			const image = heroImage ? abs(typeof heroImage === 'string' ? heroImage : heroImage.src) : abs('/og-default.png');
+			const image = heroImage ? abs(typeof heroImage === 'string' ? sizedImageUrl(heroImage, 1200) : heroImage.src) : abs('/og-default.png');
 			const alt = heroImageAlt?.trim() || title;
 			const url = abs(`/blog/${post.id}/`);
 			// Links readers click carry ?utm_source=rss (counted as "Feed readers" in the admin's Traffic page,

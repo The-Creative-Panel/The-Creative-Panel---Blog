@@ -70,6 +70,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 			import { ADMIN_ORIGINS, SITE_TIMEZONE } from '../consts';
 			import { termLabel } from '../lib/taxonomy';
 			import { photoCaption } from '../lib/rehypeImageCaptions.mjs';
+			import { sizedImageUrl } from '../lib/imageUrl';
 
 			type PreviewPost = {
 				title: string;
@@ -117,7 +118,8 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 				$('read').textContent = `${Math.max(1, Math.round(words / 230))} min read`;
 				const cover = $('cover') as HTMLImageElement;
 				cover.hidden = !p.coverImage;
-				if (p.coverImage && cover.getAttribute('src') !== p.coverImage) cover.src = p.coverImage;
+				const coverSrc = p.coverImage ? sizedImageUrl(p.coverImage, 1600) : '';
+				if (coverSrc && cover.getAttribute('src') !== coverSrc) cover.src = coverSrc;
 				cover.alt = p.coverImageAlt?.trim() || p.title;
 			const heroCaption = p.coverImage ? photoCaption(p.coverImageCredit) : null;
 			$('photo').textContent = heroCaption ?? '';
