@@ -164,7 +164,8 @@ const alsoLike = rank('views').filter((p) => !featured.includes(p)).slice(0, 3);
 			</aside>
 		</main>
 
-		<Footer />
+		<!-- The newsletter bar sits under the hero, so the footer doesn't offer it again -->
+		<Footer newsletter={false} />
 
 		<script>
 			// Live like/view counts from the API (hearts, Most Read, Most Liked)

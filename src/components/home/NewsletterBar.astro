@@ -1,6 +1,7 @@
 ---
 // Newsletter signup. Posts to services/api `/subscribers`.
 // Set PUBLIC_API_URL (e.g. in apps/blog/.env) to the deployed API's URL.
+import { NEWSLETTER_PITCH } from '../../consts';
 const apiUrl = import.meta.env.PUBLIC_API_URL ?? '';
 ---
 
@@ -12,7 +13,7 @@ const apiUrl = import.meta.env.PUBLIC_API_URL ?? '';
 			>
 			<div>
 				<p class="label !mb-1 !text-[16px] !font-medium text-foreground">The Newsletter</p>
-				<p class="!m-0 text-[16px] text-muted-foreground">New chapters, writing notes &amp; behind-the-scenes from the desk. No noise.</p>
+				<p class="!m-0 text-[16px] text-muted-foreground">{NEWSLETTER_PITCH}</p>
 			</div>
 		</div>
 

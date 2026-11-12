@@ -4,10 +4,15 @@ import CookieConsent from './CookieConsent.astro';
 import PostingSchedule from './PostingSchedule.astro';
 // Site footer (prototype structure): logo + bio | Navigate | More | Legal | Connect,
 // then a newsletter sign-up, then the copyright line.
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { NEWSLETTER_PITCH, SITE_BLURB, SITE_TITLE } from '../consts';
 import { legalPages } from '../data/legal';
 import { profile } from '../data/profile';
 
+interface Props {
+	/** false on pages with their own signup (homepage), so the newsletter isn't offered twice */
+	newsletter?: boolean;
+}
+const { newsletter = true } = Astro.props;
 const year = new Date().getFullYear();
 const apiUrl = import.meta.env.PUBLIC_API_URL ?? '';
 
@@ -44,7 +49,7 @@ const connect = [
 					<span class="text-brand-gold">{SITE_TITLE}</span><span class="text-brand-logo-accent">.</span>
 				</a>
 				<p class="!mb-0 mt-3 text-[16px] leading-relaxed text-muted-foreground">
-					{SITE_DESCRIPTION}. {profile.bio}
+					{SITE_BLURB}
 				</p>
 			</div>
 
@@ -110,7 +115,8 @@ const connect = [
 			</div>
 		</div>
 
-		<!-- Newsletter -->
+		<!-- Newsletter (left out on pages that already have a signup: the homepage's bar under the hero) -->
+		{newsletter && (
 		<div class="mt-12 border-t border-border pt-8" data-newsletter-root>
 			<div class="mb-2 flex items-center gap-2.5">
 				<svg class="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"
@@ -118,7 +124,7 @@ const connect = [
 				>
 				<p class="label !m-0 !text-[16px] font-semibold text-foreground">Newsletter</p>
 			</div>
-			<p class="!mb-2 text-[16px] text-muted-foreground">New chapters, writing notes &amp; behind-the-scenes. No noise.</p>
+			<p class="!mb-2 text-[16px] text-muted-foreground">{NEWSLETTER_PITCH}</p>
 			<PostingSchedule variant="line" class="!mb-4" />
 			<form class="flex w-full" data-newsletter data-api={apiUrl}>
 				<label for="footer-email" class="sr-only">Email address</label>
@@ -144,6 +150,7 @@ const connect = [
 				<img src="https://ecosend.io/badge/white.png" width="220" height="80" alt="EcoSend. Climate-conscious email." loading="lazy" class="hidden dark:block" />
 			</a>
 		</div>
+		)}
 
 		<!-- Bottom line -->
 		<div class="mt-8 flex flex-col gap-2 border-t border-border pt-6 text-[16px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
