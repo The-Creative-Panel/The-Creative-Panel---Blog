@@ -1,0 +1,277 @@
+---
+// C · Magazine spread, full width. Three panels side by side on wide screens:
+//   1. the cover (newest post as the cover story, photo to the bottom edge)
+//   2. "More to read": cream masthead, then each post as a forum-style banner (RP board era)
+//   3. tiles: newsletter signup, the book (cover half + details half), a compact author strip
+// Two columns on laptops (the tiles go full width underneath), one on phones.
+import PostImage from '../PostImage.astro';
+import { sizedImageUrl } from '../../lib/imageUrl';
+import { SITE_TIMEZONE } from '../../consts';
+import { readingTime } from '../../lib/posts';
+import { termLabel } from '../../lib/taxonomy';
+import { relFor } from '../../lib/rehypeNofollow.mjs';
+import type { SocialPageProps } from './types';
+
+const { all, latest, book, profile, schedule, apiUrl, maxContents = 5 } = Astro.props as SocialPageProps & { maxContents?: number };
+const dateIn = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: SITE_TIMEZONE });
+const newest = dateIn(latest?.data.pubDate ?? new Date()); // when the newest post went up
+// The newest post is the cover story (left panel); the contents carry on from the next one, in order.
+// Numbered as chapters: the cover story is 01, so the contents start at 02.
+const contents = all.slice(1, 1 + maxContents); // at most five (the lab can try more)
+const postCount = String(all.length).padStart(2, '0');
+const b = book?.data;
+const pct = b?.targetWordCount ? Math.min(100, (b.wordCount / b.targetWordCount) * 100) : null;
+const initials = profile.name.split(' ').map((w) => w[0]).join('');
+---
+
+<div class="bg-[#141414]">
+	<div class="grid w-full grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:min-h-[min(calc(100svh-57px),1150px)] xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)_minmax(0,0.95fr)]">
+		<!-- 1 · The cover -->
+		<section class="relative flex min-h-[88svh] flex-col overflow-hidden bg-brand-ink text-white lg:min-h-[720px]">
+			{latest && <PostImage src={latest.data.heroImage} alt="" fallback={latest.data.category ?? ''} width={1400} priority class="absolute inset-0 h-full w-full !rounded-none object-cover opacity-55" />}
+			<div class="absolute inset-0 bg-gradient-to-b from-black/75 via-black/10 to-black/90" />
+			<header class="relative px-6 pt-6 text-center lg:px-10 lg:pt-8">
+				<div class="flex items-center justify-between gap-3 border-b border-white/30 pb-1.5 text-[11px] uppercase tracking-[0.18em] text-white/70 lg:text-[12px]">
+					<span class="whitespace-nowrap">New post · {newest}</span>
+					<span class="whitespace-nowrap" data-from="For {p} readers">joelgreen.studio</span>
+				</div>
+				<p class="!m-0 mt-3 font-logo text-[44px] font-black uppercase !leading-[0.9] tracking-tight text-brand-gold lg:text-[60px] 2xl:text-[72px] min-[2200px]:text-[92px]">
+					The Creative<br />Panel<span class="text-brand-logo-accent">.</span>
+				</p>
+				<p class="!m-0 mt-2 text-[12px] uppercase tracking-[0.3em] text-white/70">The writings of Joel Green</p>
+			</header>
+			{
+				latest && (
+					<a href={`/blog/${latest.id}/`} class="relative mt-auto block px-6 pb-10 no-underline lg:px-10 lg:pb-12">
+						<span class="label inline-block bg-brand-gold px-2 py-0.5 !text-[12px] !text-black">Cover story</span>
+						<span class="mt-3 block font-display text-[46px] font-semibold uppercase !leading-[0.92] !text-white lg:text-[56px] 2xl:text-[68px] min-[2200px]:text-[84px]">{latest.data.title}</span>
+						{latest.data.description && <span class="mt-3 line-clamp-2 block max-w-lg text-[15px] text-white/70 2xl:text-[17px]">{latest.data.description}</span>}
+						<span class="label mt-4 inline-block border-b-2 border-brand-gold !text-[15px] !text-white">Read the cover story →</span>
+					</a>
+				)
+			}
+		</section>
+
+		<!-- 2 · Contents: cream masthead, then each post as a full-width photo band (the bands share the height) -->
+		<section class="relative flex flex-col overflow-hidden bg-[#f4efe4] text-[#1a1a1a]">
+			<!-- Big faint post count behind the masthead, like a printed folio -->
+			<span class="pointer-events-none absolute -right-4 -top-10 select-none font-display text-[260px] font-bold !leading-none text-[#1a1a1a]/[0.04] min-[2200px]:text-[340px]" aria-hidden="true">
+				{postCount}
+			</span>
+			<div class="relative px-6 pb-6 pt-10 lg:px-12 lg:pt-12 2xl:px-14">
+			<div class="relative flex items-end justify-between gap-4 border-b-[3px] border-[#1a1a1a] pb-3">
+				<div>
+					<p class="label !mb-1 !text-[13px] text-[#93700c]">More to read</p>
+					<p class="!m-0 font-display text-[44px] font-semibold uppercase !leading-[0.85] 2xl:text-[54px] min-[2200px]:text-[68px]">Contents</p>
+				</div>
+				<p class="label !m-0 text-right !text-[12px] text-[#1a1a1a]/60">{all.length} posts so far<br /><a href="/latest/" class="!text-[#93700c] hover:underline">All posts →</a></p>
+			</div>
+			<p class="!mb-0 mt-3 font-heading text-[16px] italic text-[#1a1a1a]/70 2xl:text-[18px]">Worldbuilding, characters, and the making of <span class="not-italic font-semibold">The Halo</span>.</p>
+			</div>
+
+			<!-- One banner per post, styled like the board / signature banners of ProBoards and ZetaBoards
+			     roleplay forums: short and wide, art fading into black behind the text,
+			     a glowing title, a small italic tagline and a "Chapter" tag. -->
+			<ol class="forum-list relative !m-0 flex flex-col gap-3 px-6 !pb-8 !pt-0 lg:px-12 xl:!pb-0 2xl:gap-4 2xl:px-14">
+				{
+					contents.map((p, i) => (
+						<li class="forum-item list-none">
+							<a href={`/blog/${p.id}/`} class="forum-banner group relative block aspect-[5/2] sm:aspect-[4/1] overflow-hidden bg-black no-underline">
+								<!-- Art across the whole banner, darkened on the left where the text sits -->
+								<PostImage src={p.data.heroImage} alt="" fallback={p.data.category ?? ''} width={1000} class="forum-art absolute inset-0 h-full w-full !rounded-none object-cover object-center opacity-80 transition duration-700 group-hover:opacity-100" />
+								<span class="forum-fade absolute inset-0 bg-gradient-to-r from-black via-black/85 to-transparent" aria-hidden="true" />
+								<span class="relative flex h-full flex-col justify-center px-4 2xl:px-6">
+									<span class="flex items-center gap-2 text-[12px] uppercase tracking-[0.22em] text-white/60 2xl:text-[14px]">
+										<span class="forum-tag">Chapter {String(i + 2).padStart(2, '0')}</span>
+										<span>{termLabel(p.data.category)} · {readingTime(p)} min</span>
+									</span>
+									<span class="forum-title mt-1.5 block font-display text-[28px] font-semibold uppercase !leading-[1] text-white 2xl:text-[38px] min-[2200px]:text-[46px]">{p.data.title}</span>
+									{p.data.description && <span class="forum-tagline mt-1.5 line-clamp-1 max-w-[82%] font-heading text-[14px] italic text-white/75 2xl:line-clamp-2 2xl:text-[17px] min-[2200px]:text-[19px]">{p.data.description}</span>}
+								</span>
+								<span class="forum-enter absolute bottom-1.5 right-2 text-[10px] uppercase tracking-[0.2em] 2xl:text-[11px]">Read →</span>
+							</a>
+						</li>
+					))
+				}
+			</ol>
+		</section>
+
+		<!-- 3 · Tiles: newsletter, the book, the author -->
+		<section class="flex flex-col gap-px bg-white/10 lg:col-span-2 xl:col-span-1">
+			<!-- Tile 1 · Newsletter: the one place to subscribe, up front -->
+			<div class="bg-brand-gold px-6 py-8 text-black lg:px-10 2xl:px-12 2xl:py-10">
+				<p class="label !mb-2 !text-[13px] text-black/70">Join the panel</p>
+				<p class="!m-0 font-display text-[34px] font-semibold uppercase !leading-[0.95] 2xl:text-[42px] min-[2200px]:text-[50px]">Get every new post in your inbox</p>
+				<p class="!mb-4 mt-2 text-[15px] text-black/75 2xl:text-[16px]">Free. A new post {schedule.daysLabel} at {schedule.timeLabel}. No noise.</p>
+				<div data-newsletter-root>
+					<form class="flex w-full" data-newsletter data-api={apiUrl}>
+						<label for="tile-email" class="sr-only">Email address</label>
+						<input id="tile-email" type="email" name="email" required placeholder="your@email.com" class="w-full min-w-0 border border-black/25 bg-white/90 px-4 py-3 text-[16px] text-black outline-none placeholder:text-black/40 focus:border-black" />
+						<button type="submit" class="label shrink-0 bg-black px-5 !text-[15px] !font-semibold !text-brand-gold hover:opacity-90">Subscribe</button>
+					</form>
+					<p class="!mb-0 mt-2 text-sm" data-newsletter-status role="status" hidden></p>
+				</div>
+			</div>
+
+			<!-- Tile 2 · The book, split in two: the cover fills one half, the details the other -->
+			{
+				b && (
+					<div class="grid flex-1 grid-cols-1 bg-brand-ink text-white sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+						<!-- Cover half: the book shown big on a dark teal backdrop -->
+						<a
+							href={b.link || '/books/'}
+							{...(b.link ? { rel: relFor(b.link) } : {})}
+							class="relative flex min-h-[340px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#0f2e30] via-[#0a1718] to-black p-8 no-underline 2xl:p-12"
+							aria-label={`${b.title}: more about the book`}
+						>
+							<span class="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_45%,rgba(36,139,143,0.35),transparent)]" aria-hidden="true" />
+							{b.coverImage ? (
+								<img src={sizedImageUrl(b.coverImage, 700)} alt={`${b.title} cover`} class="relative aspect-[2/3] h-full max-h-[520px] w-auto max-w-full object-cover shadow-[0_24px_60px_rgba(0,0,0,0.7)]" />
+							) : (
+								<span class="relative flex aspect-[2/3] h-full max-h-[520px] w-auto max-w-full min-w-[150px] flex-col justify-between border border-white/10 bg-gradient-to-b from-[#123d3f] via-[#0b1f20] to-black p-5 shadow-[0_24px_60px_rgba(0,0,0,0.7)] 2xl:p-7">
+									<span class="label text-[12px] text-white/55 2xl:text-[14px]">{b.series}</span>
+									<span class="font-logo text-[34px] font-bold uppercase leading-[0.92] tracking-tight text-brand-gold 2xl:text-[46px] min-[2200px]:text-[56px]">{b.title}</span>
+									<span class="label text-[12px] text-white/65 2xl:text-[14px]">Joel Green</span>
+								</span>
+							)}
+						</a>
+
+						<!-- Details half -->
+						<div class="flex flex-col justify-center px-6 py-8 lg:px-8 2xl:px-10">
+							<p class="label !mb-1 !text-[12px] text-brand-teal-light 2xl:!text-[13px]">
+								Now writing{b.genre && <> · {b.genre}</>}
+							</p>
+							<p class="!m-0 font-display text-[36px] font-semibold uppercase !leading-none 2xl:text-[46px] min-[2200px]:text-[54px]">{b.title}</p>
+							{b.series && (
+								<p class="label !mb-0 mt-1 !text-[12px] text-white/50 2xl:!text-[13px]">
+									{b.series}
+									{b.seriesOrder && <> · Book {b.seriesOrder}</>}
+								</p>
+							)}
+							{b.blurb && <p class="!mb-0 mt-4 text-[15px] leading-relaxed text-white/75 2xl:text-[17px] min-[2200px]:text-[19px]">{b.blurb}</p>}
+							{pct !== null && (
+								<div class="mt-5">
+									<div class="h-[3px] w-full bg-white/15">
+										<div class="h-full bg-brand-teal-light" style={`width:${Math.max(pct, 1.5)}%`} />
+									</div>
+									<p class="!mb-0 mt-2 text-[12px] uppercase tracking-[0.08em] text-white/50 2xl:text-[13px]">
+										{b.wordCount.toLocaleString()} / {b.targetWordCount!.toLocaleString()} words
+										{b.wordCountUpdatedAt && <> · updated {dateIn(b.wordCountUpdatedAt)}</>}
+									</p>
+								</div>
+							)}
+							<a
+								href={b.link || '/books/'}
+								{...(b.link ? { rel: relFor(b.link) } : {})}
+								class="label mt-7 inline-flex items-center gap-2 self-start bg-white px-5 py-3 !text-[15px] !font-semibold !text-black no-underline hover:bg-brand-gold"
+							>
+								Follow the book →
+							</a>
+						</div>
+					</div>
+				)
+			}
+
+			<!-- Tile 3 · The author: a compact strip -->
+			<div class="flex items-center gap-4 bg-[#1c1c1c] px-6 py-5 text-white lg:px-8 2xl:gap-5 2xl:px-10">
+				{
+					profile.avatar ? (
+						<img src={profile.avatar} alt={profile.name} class="size-14 shrink-0 object-cover 2xl:size-16" />
+					) : (
+						<span class="flex size-14 shrink-0 items-center justify-center border border-brand-gold/60 font-display text-[22px] font-semibold text-brand-gold 2xl:size-16 2xl:text-[26px]">
+							{initials}
+						</span>
+					)
+				}
+				<div class="min-w-0 flex-1">
+					<p class="label !m-0 !text-[11px] text-white/45">The author</p>
+					<p class="!m-0 font-display text-[22px] font-semibold uppercase !leading-tight 2xl:text-[26px]">{profile.name}</p>
+					<p class="!m-0 truncate text-[13px] text-white/65 2xl:text-[14px]">{profile.bio}</p>
+				</div>
+				<div class="flex shrink-0 flex-col items-end gap-1.5">
+					<a href="/about/" class="label inline-flex items-center gap-1.5 border border-white/40 px-3 py-2 !text-[13px] !font-semibold !text-white no-underline hover:border-brand-gold hover:!text-brand-gold">
+						Meet Joel →
+					</a>
+					<a href="https://joelgreenauthor.com" class="text-[12px] !text-white/55 hover:!text-brand-gold">joelgreenauthor.com</a>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+
+<style>
+	/* Forum-era banner details (ProBoards / ZetaBoards roleplay boards) */
+	.forum-banner {
+		box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.6);
+	}
+	/* glowing title, like the text effects on old board banners */
+	.forum-title {
+		text-shadow:
+			0 0 6px rgba(214, 160, 21, 0.55),
+			0 0 18px rgba(214, 160, 21, 0.25),
+			1px 1px 0 #000;
+	}
+	.forum-tag {
+		border: 1px solid rgba(214, 160, 21, 0.7);
+		color: #d6a015;
+		padding: 1px 5px;
+		letter-spacing: 0.2em;
+	}
+	.forum-enter {
+		color: rgba(255, 255, 255, 0.55);
+		text-shadow: 1px 1px 0 #000;
+	}
+	.forum-banner:hover .forum-enter {
+		color: #d6a015;
+	}
+
+	/* Desktop with a mouse: the banners share the contents panel's height; the one under the pointer
+	   grows to fill it (photo full width, more of the excerpt) while the others shrink to title strips.
+	   Phones and tablets (no hover) keep the normal stacked banners. */
+	@media (min-width: 1280px) and (hover: hover) {
+		.forum-list {
+			flex: 1;
+			min-height: 560px;
+			gap: 1px;
+			padding: 0 !important;
+			background: #000;
+		}
+		.forum-item {
+			display: flex;
+			flex: 1 1 0;
+			min-height: 64px;
+			transition: flex-grow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+		}
+		.forum-item .forum-banner {
+			aspect-ratio: auto;
+			width: 100%;
+			height: 100%;
+			border: 0;
+			box-shadow: none;
+		}
+		.forum-list:hover .forum-item {
+			flex-grow: 0.25;
+		}
+		.forum-list .forum-item:hover {
+			flex-grow: 6;
+		}
+		/* The photo keeps one fixed size (the expanded banner's), centred, so growing a banner only
+		   uncovers more of it instead of re-zooming it every frame */
+		.forum-item :global(.forum-art) {
+			top: 50%;
+			bottom: auto;
+			height: 900px;
+			transform: translateY(-50%);
+		}
+		.forum-fade {
+			transition: opacity 0.5s ease;
+		}
+		.forum-item:hover .forum-fade {
+			opacity: 0.75;
+		}
+		.forum-item:hover .forum-tagline {
+			-webkit-line-clamp: 4;
+			line-clamp: 4;
+		}
+	}
+</style>

@@ -1,0 +1,77 @@
+---
+// B · Start here: the classic "New here?" page many blogs keep. A light page header, a short intro,
+// three posts to begin with, the topics (categories with their descriptions), then the latest posts.
+import LightPageHeader from '../../LightPageHeader.astro';
+import PostImage from '../../PostImage.astro';
+import SectionTitle from '../../home/SectionTitle.astro';
+import PostRow from '../../home/PostRow.astro';
+import { CATEGORY_BLURBS } from '../../../data/categories';
+import { readingTime } from '../../../lib/posts';
+import { categoryIndex, termLabel } from '../../../lib/taxonomy';
+import type { SocialPageProps } from '../../social/types';
+
+const { all, latest, starter, schedule } = Astro.props as SocialPageProps;
+// Three to begin with: the chosen starter, then the newest others
+const picks = [starter, ...all.filter((p) => p.id !== starter?.id)].filter(Boolean).slice(0, 3) as NonNullable<typeof latest>[];
+const topics = categoryIndex(all);
+---
+
+<LightPageHeader label="New here?" title="Start here" />
+
+<div class="page-wide py-12">
+	<p class="!mb-0 max-w-3xl font-heading text-[21px] leading-snug text-foreground/85" data-from="Welcome, {p} readers. The Creative Panel is where I write about building worlds and characters, and about writing my first novel, The Halo.">
+		The Creative Panel is where I write about building worlds and characters, and about writing my first novel, <em>The Halo</em>.
+	</p>
+	<p class="!mb-0 mt-3 text-[16px] text-muted-foreground">New posts {schedule.daysLabel} at {schedule.timeLabel}.</p>
+
+	<!-- Three to begin with -->
+	<section class="mt-12">
+		<SectionTitle>Begin with these</SectionTitle>
+		<div class="grid gap-6 md:grid-cols-3">
+			{
+				picks.map((p, i) => (
+					<a href={`/blog/${p.id}/`} class="group block no-underline">
+						<div class="relative aspect-[3/2] overflow-hidden bg-brand-ink">
+							<PostImage src={p.data.heroImage} alt="" fallback={p.data.category ?? ''} width={700} class="absolute inset-0 h-full w-full !rounded-none object-cover transition duration-500 group-hover:scale-[1.03]" />
+						</div>
+						<p class="label !mb-1 mt-3 !text-[13px] text-primary">{i === 0 ? 'Start here' : termLabel(p.data.category)}</p>
+						<h2 class="!m-0 font-display !text-[24px] font-semibold uppercase !leading-[1.05] !text-foreground group-hover:!text-primary">{p.data.title}</h2>
+						{p.data.description && <p class="!mb-0 mt-2 line-clamp-3 text-[15px] text-muted-foreground">{p.data.description}</p>}
+						<p class="!mb-0 mt-2 text-[13px] text-muted-foreground">{readingTime(p)} min read</p>
+					</a>
+				))
+			}
+		</div>
+	</section>
+
+	<div class="mt-14 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+		<!-- Topics -->
+		<section>
+			<SectionTitle>Explore by topic</SectionTitle>
+			<ul class="!m-0 divide-y divide-border border-y border-border !p-0">
+				{
+					topics.map((t) => (
+						<li class="list-none">
+							<a href={`/categories/${t.slug}/`} class="group block py-4 no-underline">
+								<span class="flex items-baseline justify-between gap-4">
+									<span class="font-display text-[20px] font-semibold uppercase !text-foreground group-hover:!text-primary">{t.label}</span>
+									<span class="text-[13px] text-muted-foreground">{t.posts.length} {t.posts.length === 1 ? 'post' : 'posts'}</span>
+								</span>
+								{CATEGORY_BLURBS[t.slug] && <span class="mt-1 block text-[15px] text-muted-foreground">{CATEGORY_BLURBS[t.slug]}</span>}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</section>
+
+		<!-- Latest -->
+		<section>
+			<SectionTitle>Latest</SectionTitle>
+			<ul class="!m-0 !p-0" role="list">
+				{all.slice(0, 5).map((p) => <PostRow post={p} />)}
+			</ul>
+			<a href="/latest/" class="label mt-6 inline-block !text-[16px] font-semibold">All posts →</a>
+		</section>
+	</div>
+</div>

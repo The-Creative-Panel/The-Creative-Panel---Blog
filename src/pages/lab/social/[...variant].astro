@@ -1,0 +1,125 @@
+---
+// Design lab: five takes on /social, the page people land on from social media bio links.
+// Only built when PUBLIC_LAB=true (local preview); the live site never has these pages.
+//   PUBLIC_LAB=true astro build && astro preview  →  http://localhost:4331/lab/social/
+// Add ?utm_source=instagram (or x, threads, tiktok…) to see the platform greeting.
+import { getCollection } from 'astro:content';
+import BaseHead from '../../../components/BaseHead.astro';
+import Footer from '../../../components/Footer.astro';
+import Header from '../../../components/Header.astro';
+import CookieConsent from '../../../components/CookieConsent.astro';
+import Cover from '../../../components/social/Cover.astro';
+import SocialFooter from '../../../components/social/SocialFooter.astro';
+import SocialNav from '../../../components/social/SocialNav.astro';
+import Front from '../../../components/lab/social/Front.astro';
+import Letter from '../../../components/lab/social/Letter.astro';
+import StartHere from '../../../components/lab/social/StartHere.astro';
+import { POSTING_SCHEDULE } from '../../../consts';
+import { profile } from '../../../data/profile';
+import { sortByDate } from '../../../lib/posts';
+import { labPosts } from '../../../lib/labSamples';
+
+// All four are real site pages (site header + footer), not a separate landing page
+const VARIANTS = {
+	front: { name: 'A · Front page', note: 'The site as it is with a welcome bar, then the section-front layout: lead story, three beside it, a grid.' },
+	start: { name: 'B · Start here', note: 'The classic "New here?" page: short intro, three posts to begin with, topics with descriptions, latest posts.' },
+	cover: { name: 'C · Magazine spread', note: 'An open magazine: the cover on the left, an "In this issue" contents page on the right.' },
+	letter: { name: 'D · A note from Joel', note: 'A short personal note beside one recommended post, with a few others to pick from.' },
+} as const;
+type Variant = keyof typeof VARIANTS;
+
+export async function getStaticPaths() {
+	if (process.env.PUBLIC_LAB !== 'true' && import.meta.env.PUBLIC_LAB !== 'true') return [];
+	return [undefined, 'front', 'start', 'cover', 'letter'].map((v) => ({ params: { variant: v } }));
+}
+
+const variant = Astro.params.variant as Variant | undefined;
+// Real posts plus two made-up ones (lab only), so the contents panel shows its full five
+const real = await getCollection('blog');
+const posts = sortByDate([...real, ...labPosts(real).filter((p) => p.id.startsWith('sample-')).slice(0, 2)]);
+const books = (await getCollection('books')).sort((a, b) => Number(b.data.featured) - Number(a.data.featured) || a.data.sortOrder - b.data.sortOrder);
+const data = {
+	all: posts,
+	latest: posts[0],
+	recent: posts.slice(1, 4),
+	// "Start here": the oldest real post after the welcome one, as a stand-in for a chosen favourite
+	starter: posts.find((p) => p.data.category !== 'News') ?? posts[0],
+	book: books[0],
+	profile,
+	schedule: POSTING_SCHEDULE,
+	apiUrl: import.meta.env.PUBLIC_API_URL ?? '',
+};
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={variant ? `${VARIANTS[variant].name} — Social page lab` : 'Social page lab'} description="Design lab" noindex />
+	</head>
+	<body class="min-h-screen">
+		{
+			!variant && (
+				<main class="mx-auto max-w-2xl px-4 py-12">
+					<h1 class="font-display !text-[36px] font-semibold uppercase">Social landing page: 4 designs</h1>
+					<p class="text-[16px] text-muted-foreground">
+						Where people land from a bio link. Open each on your phone width; add <code>?utm_source=instagram</code> to see the greeting.
+					</p>
+					<ul class="!p-0">
+						{(Object.keys(VARIANTS) as Variant[]).map((v) => (
+							<li class="list-none border-b border-border py-4">
+								<a href={`/lab/social/${v}/?utm_source=instagram`} class="font-display text-[22px] font-semibold uppercase">
+									{VARIANTS[v].name}
+								</a>
+								<p class="!mb-0 mt-1 text-[15px] text-muted-foreground">{VARIANTS[v].note}</p>
+							</li>
+						))}
+					</ul>
+				</main>
+			)
+		}
+		{
+			variant && (
+				<>
+					{variant === 'cover' ? (
+						// The chosen design: its own nav + footer (the one landing page for social links)
+						<>
+							<SocialNav />
+							<Cover {...data} />
+							<SocialFooter profile={data.profile} schedule={data.schedule} apiUrl={data.apiUrl} />
+							<CookieConsent />
+						</>
+					) : (
+						<>
+							<Header />
+							{variant === 'front' && <Front {...data} />}
+							{variant === 'start' && <StartHere {...data} />}
+							{variant === 'letter' && <Letter {...data} />}
+							<Footer />
+						</>
+					)}
+				</>
+			)
+		}
+
+		{
+			variant && (
+				<nav class="fixed bottom-3 left-1/2 z-50 flex -translate-x-1/2 gap-1 rounded-full border border-white/15 bg-black/85 p-1 text-[12px] text-white shadow-lg backdrop-blur" aria-label="Lab designs">
+					{(Object.keys(VARIANTS) as Variant[]).map((v) => (
+						<a href={`/lab/social/${v}/${Astro.url.search}`} class:list={['rounded-full px-3 py-1.5 font-semibold no-underline', v === variant ? 'bg-white !text-black' : '!text-white/80']}>
+							{VARIANTS[v].name.split(' · ')[0]}
+						</a>
+					))}
+				</nav>
+			)
+		}
+
+		<script>
+			import { initNewsletterForms } from '../../../lib/newsletter';
+			import { greetByPlatform } from '../../../lib/socialGreeting';
+			greetByPlatform(); // "Welcome, Instagram readers" (same as the live page)
+			initNewsletterForms();
+			import { rememberEntry } from '../../../lib/viewSource';
+			rememberEntry();
+		</script>
+	</body>
+</html>

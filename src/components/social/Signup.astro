@@ -1,0 +1,42 @@
+---
+// Newsletter form for the social-page designs. Kept secondary: reading a post is the main action.
+// tone: 'dark' on black sections, 'light' elsewhere. size 'sm' = a quiet one-line form.
+interface Props {
+	apiUrl: string;
+	tone?: 'dark' | 'light';
+	size?: 'sm' | 'md';
+	button?: string;
+	id: string;
+}
+const { apiUrl, tone = 'light', size = 'sm', button = 'Subscribe', id } = Astro.props;
+const pad = size === 'sm' ? 'px-3 py-2 text-[14px]' : 'px-4 py-3 text-[16px]';
+---
+
+<div data-newsletter-root>
+	<form class="flex w-full max-w-sm" data-newsletter data-api={apiUrl}>
+		<label for={id} class="sr-only">Email address</label>
+		<input
+			id={id}
+			type="email"
+			name="email"
+			required
+			placeholder="your@email.com"
+			class:list={[
+				'w-full min-w-0 outline-none',
+				pad,
+				tone === 'dark' ? 'border border-white/20 bg-white/5 text-white placeholder:text-white/40 focus:border-brand-gold' : 'border border-input bg-muted focus:border-primary',
+			]}
+		/>
+		<button
+			type="submit"
+			class:list={[
+				'label shrink-0 !font-semibold',
+				size === 'sm' ? 'px-3 !text-[13px]' : 'px-5 !text-[15px]',
+				tone === 'dark' ? 'border border-white/25 !text-white hover:border-brand-gold hover:!text-brand-gold' : 'border border-border text-foreground hover:border-primary hover:text-primary',
+			]}
+		>
+			{button}
+		</button>
+	</form>
+	<p class="!mb-0 mt-2 text-sm" data-newsletter-status role="status" hidden></p>
+</div>

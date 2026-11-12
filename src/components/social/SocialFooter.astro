@@ -1,0 +1,47 @@
+---
+// /social's own footer: where else to find Joel, more to read, and the legal links (with
+// Cookie settings). Dark, to match the navbar. (The newsletter has its own tile on the page.)
+import { legalPages } from '../../data/legal';
+import type { SocialPageProps } from './types';
+
+const { profile, schedule, apiUrl } = Astro.props as Pick<SocialPageProps, 'profile' | 'schedule' | 'apiUrl'>;
+const find = [
+	...profile.socials.map((s) => ({ label: s.label, href: s.url })),
+	{ label: 'joelgreenauthor.com', href: 'https://joelgreenauthor.com' },
+	{ label: 'RSS feed', href: '/rss/' },
+	...(profile.email ? [{ label: profile.email, href: `mailto:${profile.email}` }] : []),
+];
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-white/10 bg-brand-ink text-white">
+	<div class="grid w-full gap-10 px-5 py-12 md:grid-cols-3 lg:px-10">
+		<div>
+			<p class="!m-0 font-logo text-[18px] font-bold uppercase tracking-tight text-brand-gold">
+				The Creative Panel<span class="text-brand-logo-accent">.</span>
+			</p>
+			<p class="!mb-0 mt-2 text-[14px] text-white/55">The writings of {profile.name}. New posts {schedule.daysLabel} at {schedule.timeLabel}.</p>
+		</div>
+		<div>
+			<p class="label !mb-3 !text-[13px] text-white/45">Find Joel</p>
+			<ul class="!m-0 space-y-1.5 !p-0">
+				{find.map((l) => <li class="list-none"><a href={l.href} class="text-[14px] !text-white/75 hover:!text-brand-gold">{l.label}</a></li>)}
+			</ul>
+		</div>
+		<div>
+			<p class="label !mb-3 !text-[13px] text-white/45">Read more</p>
+			<ul class="!m-0 space-y-1.5 !p-0">
+				<li class="list-none"><a href="/latest/" class="text-[14px] !text-white/75 hover:!text-brand-gold">Latest posts</a></li>
+				<li class="list-none"><a href="/categories/" class="text-[14px] !text-white/75 hover:!text-brand-gold">Topics</a></li>
+				<li class="list-none"><a href="/" class="text-[14px] !text-white/75 hover:!text-brand-gold">The full blog</a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="flex w-full flex-wrap items-center justify-between gap-3 border-t border-white/10 px-5 py-5 text-[13px] text-white/45 lg:px-10">
+		<p class="!m-0">© {year} Joel Green</p>
+		<p class="!m-0 flex flex-wrap gap-x-4 gap-y-1">
+			{legalPages.map((l) => <a href={l.href} class="!text-white/45 hover:!text-brand-gold">{l.label}</a>)}
+			<button type="button" data-cookie-settings class="cursor-pointer text-white/45 hover:text-brand-gold">Cookie settings</button>
+		</p>
+	</div>
+</footer>

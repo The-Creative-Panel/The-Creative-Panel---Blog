@@ -1,0 +1,19 @@
+---
+// A · Front page: the site as it is, a welcome bar, then the "section front" layout the category
+// pages use (lead story, three beside it, the rest as a grid). Feels like landing on the magazine.
+import SectionFront from '../../taxonomy/SectionFront.astro';
+import Welcome from './Welcome.astro';
+import type { SocialPageProps } from '../../social/types';
+
+const { all, schedule } = Astro.props as SocialPageProps;
+---
+
+<Welcome schedule={schedule} />
+<SectionFront
+	label="The Creative Panel"
+	kicker="The writings of Joel Green"
+	description="Essays on writing, worldbuilding and characters, and the making of a first novel, The Halo."
+	count={all.length}
+	posts={all}
+	page={{ current: 1, total: 1, base: '/social/' }}
+/>

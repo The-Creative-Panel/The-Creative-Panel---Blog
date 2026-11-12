@@ -1,0 +1,75 @@
+---
+// C · A note from Joel. Desktop: the note on the left, the recommended post as a large card on the
+// right (stays in view). Phone: note, then the card. Personal and quiet; reading is the ask.
+// (The wording is a placeholder in Joel's voice: rewrite before using.)
+import PostImage from '../../PostImage.astro';
+import { readingTime } from '../../../lib/posts';
+import Signup from '../../social/Signup.astro';
+import type { SocialPageProps } from '../../social/types';
+
+const { latest, recent, starter, profile, schedule, apiUrl } = Astro.props as SocialPageProps;
+const initials = profile.name.split(' ').map((w) => w[0]).join('');
+const others = [latest, ...recent].filter((p) => p && p.id !== starter?.id).slice(0, 3) as NonNullable<typeof latest>[];
+---
+
+<div class="mx-auto grid max-w-6xl gap-10 px-6 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16 lg:px-10 lg:py-20">
+	<!-- The note -->
+	<div class="max-w-xl">
+		<div class="flex items-center gap-3">
+			<span class="flex size-12 items-center justify-center bg-brand-ink font-display text-[20px] font-semibold text-brand-gold">{initials}</span>
+			<div>
+				<p class="!m-0 font-semibold">{profile.name}</p>
+				<p class="!m-0 text-[14px] text-muted-foreground">The Creative Panel</p>
+			</div>
+		</div>
+
+		<h1 class="!mb-4 mt-10 font-heading !text-[30px] font-semibold !leading-tight lg:!text-[40px]" data-from="Hey, glad you found me on {p}.">Hey, glad you're here.</h1>
+		<div class="space-y-4 text-[18px] leading-relaxed text-foreground/85 lg:text-[19px]">
+			<p class="!m-0">I'm writing my first novel, <em>The Halo</em>, and this is where I think out loud about it: building worlds, finding characters, and learning to write by writing badly first.</p>
+			<p class="!m-0">If you only read one thing, start with the one on the right. <span class="lg:hidden">(It's just below.)</span></p>
+		</div>
+
+		{
+			others.length > 0 && (
+				<>
+					<p class="label !mb-2 mt-10 !text-[14px] text-muted-foreground">Or pick another</p>
+					<ul class="!m-0 divide-y divide-border border-y border-border !p-0">
+						{others.map((p) => (
+							<li class="list-none">
+								<a href={`/blog/${p.id}/`} class="flex items-baseline justify-between gap-4 py-3 no-underline">
+									<span class="text-[17px] font-medium !text-foreground hover:!text-primary">{p.data.title}</span>
+									<span class="shrink-0 text-[13px] text-muted-foreground">{readingTime(p)} min</span>
+								</a>
+							</li>
+						))}
+					</ul>
+				</>
+			)
+		}
+
+		<div class="mt-10">
+			<p class="!mb-3 text-[15px] text-muted-foreground">I post {schedule.daysLabel} at {schedule.timeLabel}. If you'd like them by email:</p>
+			<Signup apiUrl={apiUrl} id="letter-email" button="Send them" />
+		</div>
+		<p class="!mb-0 mt-10 font-heading text-[20px] italic text-muted-foreground">— Joel</p>
+	</div>
+
+	<!-- Start here -->
+	{
+		starter && (
+			<div class="order-first lg:order-none">
+				<a href={`/blog/${starter.id}/`} class="group block border border-border no-underline transition-colors hover:border-primary lg:sticky lg:top-10">
+					<div class="relative aspect-[4/3] overflow-hidden bg-brand-ink">
+						<PostImage src={starter.data.heroImage} alt="" fallback={starter.data.category ?? ''} width={1000} class="absolute inset-0 h-full w-full !rounded-none object-cover transition duration-500 group-hover:scale-[1.03]" />
+						<span class="label absolute left-4 top-4 bg-brand-gold px-2 py-0.5 !text-[12px] text-black">Start here</span>
+					</div>
+					<div class="p-6">
+						<p class="!m-0 font-display text-[30px] font-semibold uppercase !leading-tight !text-foreground group-hover:!text-primary">{starter.data.title}</p>
+						{starter.data.description && <p class="!mb-0 mt-2 text-[16px] text-muted-foreground">{starter.data.description}</p>}
+						<p class="label !mb-0 mt-4 !text-[15px] text-primary">Read it · {readingTime(starter)} min →</p>
+					</div>
+				</a>
+			</div>
+		)
+	}
+</div>

@@ -1,0 +1,56 @@
+---
+// /social: the one landing page for everything shared on social media (bio links, posts).
+// A magazine spread with its own navbar and footer:
+//   1. the cover: the newest post as the cover story
+//   2. "Contents": the next five posts as RP-forum-style banners (hover one on desktop to open it)
+//   3. tiles: newsletter signup, the book (cover + details), a compact author strip
+// Each platform's bio uses its own tagged address (admin → Promote → Bio links), e.g.
+//   https://joelgreen.studio/social/?utm_source=instagram&utm_medium=social
+// so the page greets them by platform and the Traffic page shows which bio sends readers.
+// (The old /links/ address redirects here: worker/index.js.) Kept out of search results.
+// The design was chosen in the lab: src/pages/lab/social/.
+import { getCollection } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import CookieConsent from '../components/CookieConsent.astro';
+import Cover from '../components/social/Cover.astro';
+import SocialFooter from '../components/social/SocialFooter.astro';
+import SocialNav from '../components/social/SocialNav.astro';
+import { POSTING_SCHEDULE, SITE_TITLE } from '../consts';
+import { profile } from '../data/profile';
+import { sortByDate } from '../lib/posts';
+
+const posts = sortByDate(await getCollection('blog'));
+const books = (await getCollection('books')).sort((a, b) => Number(b.data.featured) - Number(a.data.featured) || a.data.sortOrder - b.data.sortOrder);
+const data = {
+	all: posts,
+	latest: posts[0],
+	recent: posts.slice(1, 4),
+	starter: posts[0],
+	book: books[0],
+	profile,
+	schedule: POSTING_SCHEDULE,
+	apiUrl: import.meta.env.PUBLIC_API_URL ?? '',
+};
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`${SITE_TITLE} — The writings of ${profile.name}`} description={`The newest from ${profile.name}: essays on worldbuilding and characters, The Halo, and the newsletter.`} noindex />
+	</head>
+	<body class="min-h-screen bg-brand-ink">
+		<SocialNav />
+		<Cover {...data} />
+		<SocialFooter profile={data.profile} schedule={data.schedule} apiUrl={data.apiUrl} />
+		<CookieConsent />
+
+		<script>
+			import { initNewsletterForms } from '../lib/newsletter';
+			import { greetByPlatform } from '../lib/socialGreeting';
+			import { rememberEntry } from '../lib/viewSource';
+			greetByPlatform(); // "Welcome, Instagram readers"
+			initNewsletterForms();
+			rememberEntry(); // a bio visit is credited to that platform when a post is opened (Traffic)
+		</script>
+	</body>
+</html>

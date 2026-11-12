@@ -40,6 +40,12 @@ export default {
 			return Response.redirect(url.toString(), 301);
 		}
 
+		// The bio-link page moved from /links/ to /social/ (keeps ?utm_… tags, so tracking still works)
+		if (url.pathname === '/links' || url.pathname === '/links/') {
+			url.pathname = '/social/';
+			return Response.redirect(url.toString(), 301);
+		}
+
 		if (FEED_PATHS.has(url.pathname) && env.FEED_STATS_SECRET) {
 			const reader = readerFromUserAgent(request.headers.get('user-agent'));
 			if (reader) {
