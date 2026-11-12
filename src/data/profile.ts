@@ -30,7 +30,7 @@ export const profile = {
 	/** About page biography. First paragraph is shown larger, as the lead. */
 	biography: [
 		"Hi, I'm Joel Green. An aspiring novelist who doesn't just dream worlds — I live in them. Every story I read or write I ask: what does this world look and feel like? Not through the character's eyes alone, but through my own.",
-		'The Halo is my first novel, currently in progress. A near-future sci-fi thriller about corporate power, survival, and a truth that costs everything. Book One of the Astroseed Trilogy. I\'m also developing Raven, a grimdark occult fantasy.',
+		'The Halo is my first novel, currently in progress. A near-future sci-fi thriller about corporate power, survival, and a truth that costs everything. Book One of the Astroseed Trilogy.',
 		"Imagination is the lens through which literature lets us see the worlds authors build. The most honest stories aren't ones that feel like fiction — they feel tangible. Familiar. Like home.",
 	],
 };

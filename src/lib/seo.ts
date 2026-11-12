@@ -14,7 +14,7 @@ export const person = {
 	name: profile.name,
 	url: abs('/about/'),
 	jobTitle: 'Author',
-	description: `Sci-fi and dark fantasy writer, working on The Halo (Book One of the Astroseed Trilogy) and Raven, a grimdark occult fantasy. ${profile.bio}`,
+	description: `Sci-fi and dark fantasy writer, working on The Halo, Book One of the Astroseed Trilogy. ${profile.bio}`,
 	knowsAbout: ['Science fiction', 'Worldbuilding', 'Mythology', 'Thriller fiction', 'Creative writing'],
 	...(profile.avatar ? { image: abs(profile.avatar) } : {}),
 	sameAs: ['https://joelgreenauthor.com', ...profile.socials.map((s) => s.url)],
