@@ -2,8 +2,13 @@
 // /social's own navbar: it's the one landing page for everything shared on social media, so it
 // gets a slim bar of its own instead of the full site menu. Logo, a greeting for the platform the
 // visitor came from, a few useful links, and one clear way into the full blog.
+// Phones: the navbar only fits the logo and "Read the blog", so the greeting gets a slim banner
+// above it instead (it scrolls away; the navbar stays pinned).
 ---
 
+<p class="label !m-0 bg-brand-gold px-4 py-1.5 text-center !text-[12px] !font-semibold tracking-[0.14em] text-black md:hidden" data-from="Welcome, {p} readers">
+	Welcome, reader
+</p>
 <header class="sticky top-0 z-40 border-b border-white/10 bg-brand-ink/95 text-white backdrop-blur">
 	<div class="flex w-full items-center justify-between gap-4 px-5 py-3 lg:px-10">
 		<a href="/" class="font-logo text-[18px] font-bold uppercase tracking-tight !text-brand-gold no-underline">
