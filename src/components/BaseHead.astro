@@ -123,12 +123,19 @@ const jsonLd = noindex ? null : JSON.stringify(graph(...schema)).replace(/</g, '
 	gtmId && (
 		<>
 			<script is:inline define:vars={{ gtmId }}>
-				// dataLayer + gtag() were set up by the consent script above
-				gtag("js", new Date());
-				// The start event GTM's "All pages" trigger listens for
-				dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+				// Only the live site reports to Analytics: local copies, previews and the design lab
+				// (localhost, workers.dev) would otherwise show up as real visits.
+				if (/(^|\.)joelgreen\.studio$/.test(location.hostname)) {
+					// dataLayer + gtag() were set up by the consent script above
+					gtag("js", new Date());
+					// The start event GTM's "All pages" trigger listens for
+					dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+					var s = document.createElement("script");
+					s.async = true;
+					s.src = "https://www.googletagmanager.com/gtm.js?id=" + gtmId;
+					document.head.appendChild(s);
+				}
 			</script>
-			<script is:inline async src={`https://www.googletagmanager.com/gtm.js?id=${gtmId}`} />
 		</>
 	)
 }
