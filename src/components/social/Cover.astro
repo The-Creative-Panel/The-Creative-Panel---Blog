@@ -33,7 +33,7 @@ const initials = profile.name.split(' ').map((w) => w[0]).join('');
 			<header class="relative px-6 pt-6 text-center lg:px-10 lg:pt-8">
 				<div class="flex items-center justify-between gap-3 border-b border-white/30 pb-1.5 text-[11px] uppercase tracking-[0.18em] text-white/70 lg:text-[12px]">
 					<span class="whitespace-nowrap">New post · {newest}</span>
-					<span class="whitespace-nowrap" data-from="For {p} readers">joelgreen.studio</span>
+					<span class="whitespace-nowrap">joelgreen.studio</span>
 				</div>
 				<p class="!m-0 mt-3 font-logo text-[44px] font-black uppercase !leading-[0.9] tracking-tight text-brand-gold lg:text-[60px] 2xl:text-[72px] min-[2200px]:text-[92px]">
 					The Creative<br />Panel<span class="text-brand-logo-accent">.</span>
@@ -51,6 +51,22 @@ const initials = profile.name.split(' ').map((w) => w[0]).join('');
 				)
 			}
 		</section>
+
+		<!-- Phones: the newsletter right after the cover (the same tile sits in column 3 on bigger screens) -->
+			<div id="join-top" class="scroll-mt-16 bg-brand-gold lg:hidden px-6 py-8 text-black lg:px-10 2xl:px-12 2xl:py-10">
+				<p class="label !mb-2 !text-[13px] text-black/70">Join the panel</p>
+				<p class="!m-0 font-display text-[34px] font-semibold uppercase !leading-[0.95] 2xl:text-[42px] min-[2200px]:text-[50px]">Get every new post in your inbox</p>
+				<p class="!mb-4 mt-2 text-[15px] text-black/75 2xl:text-[16px]">Free. A new post {schedule.daysLabel} at {schedule.timeLabel}. No noise.</p>
+				<div data-newsletter-root>
+					<form class="flex w-full" data-newsletter data-api={apiUrl}>
+						<label for="tile-email-top" class="sr-only">Email address</label>
+						<input id="tile-email-top" type="email" name="email" required placeholder="your@email.com" class="w-full min-w-0 border border-black/25 bg-white/90 px-4 py-3 text-[16px] text-black outline-none placeholder:text-black/40 focus:border-black" />
+						<button type="submit" class="label shrink-0 bg-black px-5 !text-[15px] !font-semibold !text-brand-gold hover:opacity-90">Subscribe</button>
+					</form>
+					<p class="!mb-0 mt-2 text-sm" data-newsletter-status role="status" hidden></p>
+				</div>
+			</div>
+
 
 		<!-- 2 · Contents: cream masthead, then each post as a full-width photo band (the bands share the height) -->
 		<section class="relative flex flex-col overflow-hidden bg-[#f4efe4] text-[#1a1a1a]">
@@ -99,7 +115,7 @@ const initials = profile.name.split(' ').map((w) => w[0]).join('');
 		<!-- 3 · Tiles: newsletter, the book, the author -->
 		<section class="flex flex-col gap-px bg-white/10 lg:col-span-2 xl:col-span-1">
 			<!-- Tile 1 · Newsletter: the one place to subscribe, up front -->
-			<div class="bg-brand-gold px-6 py-8 text-black lg:px-10 2xl:px-12 2xl:py-10">
+			<div id="join" class="hidden scroll-mt-16 bg-brand-gold lg:block px-6 py-8 text-black lg:px-10 2xl:px-12 2xl:py-10">
 				<p class="label !mb-2 !text-[13px] text-black/70">Join the panel</p>
 				<p class="!m-0 font-display text-[34px] font-semibold uppercase !leading-[0.95] 2xl:text-[42px] min-[2200px]:text-[50px]">Get every new post in your inbox</p>
 				<p class="!mb-4 mt-2 text-[15px] text-black/75 2xl:text-[16px]">Free. A new post {schedule.daysLabel} at {schedule.timeLabel}. No noise.</p>
@@ -160,13 +176,18 @@ const initials = profile.name.split(' ').map((w) => w[0]).join('');
 									</p>
 								</div>
 							)}
-							<a
-								href={b.link || '/books/'}
-								{...(b.link ? { rel: relFor(b.link) } : {})}
-								class="label mt-7 inline-flex items-center gap-2 self-start bg-white px-5 py-3 !text-[15px] !font-semibold !text-black no-underline hover:bg-brand-gold"
-							>
-								Follow the book →
-							</a>
+							<div class="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
+								<a
+									href={b.link || '/books/'}
+									{...(b.link ? { rel: relFor(b.link) } : {})}
+									class="label inline-flex items-center gap-2 bg-white px-5 py-3 !text-[15px] !font-semibold !text-black no-underline hover:bg-brand-gold"
+								>
+									About {b.title} →
+								</a>
+								<!-- "Following" the book = the newsletter: jump to the signup (top copy on phones) -->
+								<a href="#join-top" class="text-[14px] !text-white/75 underline decoration-brand-gold underline-offset-4 hover:!text-brand-gold lg:hidden">Get updates on the book</a>
+								<a href="#join" class="hidden text-[14px] !text-white/75 underline decoration-brand-gold underline-offset-4 hover:!text-brand-gold lg:inline">Get updates on the book</a>
+							</div>
 						</div>
 					</div>
 				)
@@ -254,6 +275,20 @@ const initials = profile.name.split(' ').map((w) => w[0]).join('');
 		}
 		.forum-list .forum-item:hover {
 			flex-grow: 6;
+		}
+		/* Keyboard: tabbing to a banner opens it the same way */
+		.forum-list:focus-within .forum-item {
+			flex-grow: 0.25;
+		}
+		.forum-list .forum-item:focus-within {
+			flex-grow: 6;
+		}
+		.forum-item:focus-within .forum-fade {
+			opacity: 0.75;
+		}
+		.forum-item:focus-within .forum-tagline {
+			-webkit-line-clamp: 4;
+			line-clamp: 4;
 		}
 		/* The photo keeps one fixed size (the expanded banner's), centred, so growing a banner only
 		   uncovers more of it instead of re-zooming it every frame */

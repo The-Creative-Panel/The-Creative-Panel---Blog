@@ -20,11 +20,20 @@ export function initNewsletterForms() {
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const email = new FormData(form).get('email');
+			// Where the signup happened, for the admin's Subscribers list: the page, plus the platform
+			// this visit came from when known (src/lib/viewSource.ts), e.g. "/social · x"
+			let from = '';
+			try {
+				from = (JSON.parse(sessionStorage.getItem('visitSource') ?? 'null') as { source?: string } | null)?.source ?? '';
+			} catch {
+				// no stored visit
+			}
+			const source = location.pathname + (from && from !== 'direct' ? ` · ${from}` : '');
 			try {
 				const res = await fetch(`${form.dataset.api ?? ''}/subscribers`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ email }),
+					body: JSON.stringify({ email, source }),
 				});
 				if (!res.ok) throw new Error();
 				const data = (await res.json().catch(() => ({}))) as { confirmEmail?: boolean };
