@@ -3,10 +3,12 @@
 // gets when a post goes out (built from the latest real post), so readers see exactly what they sign up for.
 import JoinForm from '../../newsletter/JoinForm.astro';
 import PostImage from '../../PostImage.astro';
+import { SITE_TIMEZONE } from '../../../consts';
 import type { NewsletterLabData } from './types';
 interface Props extends NewsletterLabData {}
 const { latest, schedule, perks, pitch } = Astro.props;
-const [firstDay] = schedule.daysLabel.split(' & '); // "Wednesdays"
+// When the latest post actually went out, in Joel's time zone, like an inbox shows it: "Fri, Nov 13"
+const sentLabel = latest.data.pubDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: SITE_TIMEZONE });
 ---
 
 <main class="!m-0 w-full !max-w-none !p-0">
@@ -35,7 +37,7 @@ const [firstDay] = schedule.daysLabel.split(' & '); // "Wednesdays"
 							<p class="!m-0 text-[14px] font-semibold text-foreground">Joel Green</p>
 							<p class="!m-0 truncate text-[13px] text-muted-foreground">New post: {latest.data.title}</p>
 						</div>
-						<span class="shrink-0 text-[12px] text-muted-foreground">{firstDay.slice(0, 3)} 1:00 PM</span>
+						<time class="shrink-0 text-[12px] text-muted-foreground" datetime={latest.data.pubDate.toISOString()}>{sentLabel}</time>
 					</div>
 					<div class="p-5">
 						<PostImage src={latest.data.heroImage} fallback={latest.data.category ?? ''} alt="" width={500} class="aspect-[16/9] w-full !rounded-none object-cover" />
