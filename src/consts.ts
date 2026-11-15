@@ -5,8 +5,8 @@ export const SITE_TITLE = 'The Creative Panel';
 export const SITE_DESCRIPTION = 'The Writings of Joel Green';
 /** Footer: what the blog is, in one line (the header already shows the tagline, the About card the bio) */
 export const SITE_BLURB = "A home for Joel Green's writing updates, and a panel for creatives who want to build dynamic characters and deep worldbuilding."; // Joel's own words (welcome post)
-/** The newsletter pitch, used everywhere there's a signup */
-export const NEWSLETTER_PITCH = 'New chapters, writing notes & behind-the-scenes. No noise.';
+/** The newsletter pitch, used everywhere there's a signup. It's ONE email a month, not one per post. */
+export const NEWSLETTER_PITCH = 'One email a month: new chapters, writing notes & behind-the-scenes. No noise.';
 
 // Dates on the site (post dates, "Updated") are shown in Joel's time zone,
 // so a post published at 8 PM shows that day, not the next UTC day.

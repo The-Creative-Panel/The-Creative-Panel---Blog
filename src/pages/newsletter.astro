@@ -7,7 +7,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import NewsletterPage from '../components/newsletter/NewsletterPage.astro';
-import { NEWSLETTER_PITCH, POSTING_SCHEDULE, SITE_TITLE } from '../consts';
+import { NEWSLETTER_PITCH, SITE_TITLE } from '../consts';
 import { NEWSLETTER_PERKS } from '../data/newsletter';
 import { sortByDate } from '../lib/posts';
 import { abs, breadcrumbs } from '../lib/seo';
@@ -26,7 +26,7 @@ const schema = [
 	<head>
 		<BaseHead
 			title={`Newsletter — ${SITE_TITLE}`}
-			description={`Join The Creative Panel, Joel Green's free newsletter. ${NEWSLETTER_PITCH} New posts ${POSTING_SCHEDULE.daysLabel}.`}
+			description={`Join The Creative Panel, Joel Green's free newsletter. ${NEWSLETTER_PITCH}`}
 			schema={schema}
 		/>
 	</head>
@@ -34,7 +34,7 @@ const schema = [
 		<Header />
 		{
 			posts.length > 0 && (
-				<NewsletterPage latest={posts[0]} recent={posts.slice(0, 4)} book={books[0]} schedule={POSTING_SCHEDULE} pitch={NEWSLETTER_PITCH} perks={NEWSLETTER_PERKS} />
+				<NewsletterPage posts={posts} book={books[0]} pitch={NEWSLETTER_PITCH} perks={NEWSLETTER_PERKS} />
 			)
 		}
 		<Footer newsletter={false} />

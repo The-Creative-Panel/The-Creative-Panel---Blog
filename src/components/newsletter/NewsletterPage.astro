@@ -1,37 +1,42 @@
 ---
 // The /newsletter page body (chosen from the lab: src/pages/lab/newsletter, design D).
+// The newsletter is ONE EMAIL A MONTH (not one per post), so the preview is a monthly roundup.
 //   1. Gold newsletter hero (the page's only form).
-//   2. Two cards side by side: the latest post as it lands in your inbox, and The Halo's live word count.
+//   2. Two cards side by side: the monthly email (built from this month's real posts) and The Halo's live word count.
 //   3. Every issue: the three perks.
-//   4. Recent posts: the next three after the one in the preview.
+//   4. Recent posts: the next few that aren't already in the email preview.
 import type { CollectionEntry } from 'astro:content';
-import { SITE_TIMEZONE, type POSTING_SCHEDULE } from '../../consts';
+import { SITE_TIMEZONE } from '../../consts';
 import type { Perk } from '../../data/newsletter';
 import { formatDate, type Post } from '../../lib/posts';
 import PostImage from '../PostImage.astro';
 import JoinForm from './JoinForm.astro';
 
 interface Props {
-	/** Shown as the email in the inbox preview */
-	latest: Post;
-	/** Newest posts (the latest is skipped in Recent posts, since it's in the preview) */
-	recent: Post[];
+	/** All posts, newest first */
+	posts: Post[];
 	book?: CollectionEntry<'books'>;
-	schedule: typeof POSTING_SCHEDULE;
 	pitch: string;
 	perks: Perk[];
 }
-const { latest, recent, book, schedule, perks, pitch } = Astro.props;
-// The latest post is already in the inbox preview, so the list starts after it
-const more = recent.filter((p) => p.id !== latest.id).slice(0, 3);
-// When the latest post actually went out, in Joel's time zone, like an inbox shows it: "Fri, Nov 13"
-const sentLabel = latest.data.pubDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: SITE_TIMEZONE });
+const { posts, book, perks, pitch } = Astro.props;
+
+// The email preview: the month of the newest post, with that month's real posts (in Joel's time zone)
+const monthKey = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: SITE_TIMEZONE }); // "November 2026"
+const latest = posts[0];
+const month = monthKey(latest.data.pubDate);
+const monthPosts = posts.filter((p) => monthKey(p.data.pubDate) === month);
+const inEmail = monthPosts.slice(0, 3);
+const moreInMonth = monthPosts.length - inEmail.length;
+const monthName = month.split(' ')[0]; // "November"
+// Recent posts below: the next ones that aren't already in the email preview
+const more = posts.filter((p) => !inEmail.includes(p)).slice(0, 3);
 
 const count = book?.data.wordCount ?? 0;
 const target = book?.data.targetWordCount || 80000;
 const pct = Math.min(100, (count / target) * 100);
 const updated = book?.data.wordCountUpdatedAt
-	? book.data.wordCountUpdatedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago' })
+	? book.data.wordCountUpdatedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: SITE_TIMEZONE })
 	: '';
 ---
 
@@ -51,29 +56,39 @@ const updated = book?.data.wordCountUpdatedAt
 			<div class="mt-9 w-full max-w-lg text-left">
 				<JoinForm id="nl-d-top" tone="gold" button="Join free" />
 			</div>
-			<p class="!mb-0 mt-6 text-[15px] text-black/70">New posts {schedule.daysLabel} at {schedule.timeLabel}.</p>
 		</div>
 	</section>
 
-	<!-- 2. Post preview + book update -->
+	<!-- 2. The monthly email + book update -->
 	<section class="flex flex-col items-center justify-center gap-8 bg-muted px-4 py-12 sm:px-10 md:flex-row md:items-stretch lg:py-16" aria-label="What you get">
 			<figure class="!m-0 flex w-full max-w-md flex-col">
-				<figcaption class="label !mb-3 text-center !text-[13px] text-muted-foreground">What lands in your inbox</figcaption>
+				<figcaption class="label !mb-3 text-center !text-[13px] text-muted-foreground">What lands in your inbox each month</figcaption>
 				<div class="flex-1 overflow-hidden rounded-lg border border-border bg-background shadow-xl">
 					<div class="flex items-center gap-3 border-b border-border px-4 py-3">
 						<span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-black font-display text-[15px] font-semibold text-brand-gold" aria-hidden="true">JG</span>
 						<div class="min-w-0 flex-1">
 							<p class="!m-0 text-[14px] font-semibold text-foreground">Joel Green</p>
-							<p class="!m-0 truncate text-[13px] text-muted-foreground">New post: {latest.data.title}</p>
+							<p class="!m-0 truncate text-[13px] text-muted-foreground">The Creative Panel · {monthName}</p>
 						</div>
-						<time class="shrink-0 text-[12px] text-muted-foreground" datetime={latest.data.pubDate.toISOString()}>{sentLabel}</time>
+						<span class="shrink-0 text-[12px] text-muted-foreground">Monthly</span>
 					</div>
 					<div class="p-5">
 						<PostImage src={latest.data.heroImage} fallback={latest.data.category ?? ''} alt="" width={500} class="aspect-[16/9] w-full !rounded-none object-cover" />
-						<p class="label !mb-1 mt-4 !text-[12px] text-primary">{latest.data.category}</p>
-						<p class="!mb-2 font-heading text-[20px] font-semibold !leading-snug text-foreground">{latest.data.title}</p>
-						{latest.data.description && <p class="!mb-4 line-clamp-3 text-[15px] text-muted-foreground">{latest.data.description}</p>}
-						<a href={`/blog/${latest.id}/`} class="label inline-block bg-black px-4 py-2.5 !text-[13px] !font-semibold !text-brand-gold no-underline hover:opacity-90">Read the full post →</a>
+						<p class="label !mb-3 mt-4 !text-[12px] text-primary">This month on the panel</p>
+						<ul class="!mb-4 space-y-2.5 !p-0">
+							{
+								inEmail.map((p) => (
+									<li class="list-none border-b border-border pb-2.5 last:border-0 last:pb-0">
+										<a href={`/blog/${p.id}/`} class="group block !text-foreground no-underline">
+											<span class="label block !text-[11px] text-muted-foreground">{p.data.category}</span>
+											<span class="font-heading text-[17px] font-semibold !leading-snug group-hover:text-primary">{p.data.title}</span>
+										</a>
+									</li>
+								))
+							}
+						</ul>
+						{moreInMonth > 0 && <p class="!mb-4 text-[14px] text-muted-foreground">+ {moreInMonth} more {moreInMonth === 1 ? 'post' : 'posts'} this month</p>}
+						<a href="/latest/" class="label inline-block bg-black px-4 py-2.5 !text-[13px] !font-semibold !text-brand-gold no-underline hover:opacity-90">Read them on the blog →</a>
 					</div>
 				</div>
 			</figure>

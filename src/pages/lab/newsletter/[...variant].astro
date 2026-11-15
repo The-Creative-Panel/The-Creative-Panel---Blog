@@ -74,7 +74,7 @@ const data: NewsletterLabData = {
 					{variant === 'simple' && <Simple {...data} />}
 					{variant === 'inbox' && <InboxPreview {...data} />}
 					{variant === 'book' && <FollowTheBook {...data} />}
-					{variant === 'mix' && <NewsletterPage {...data} />}
+					{variant === 'mix' && <NewsletterPage posts={posts} book={data.book} pitch={data.pitch} perks={data.perks} />}
 					<Footer newsletter={false} />
 					<nav class="fixed bottom-3 left-1/2 z-50 flex -translate-x-1/2 gap-1 rounded-full border border-white/15 bg-black/85 p-1 text-[12px] text-white shadow-lg backdrop-blur" aria-label="Lab designs">
 						{(Object.keys(VARIANTS) as Variant[]).map((v) => (
