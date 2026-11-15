@@ -21,8 +21,8 @@ export const ADMIN_ORIGINS = ['http://localhost:4323', 'http://127.0.0.1:4323'];
  * days: 0 = Sunday … 6 = Saturday. hour: 24-hour clock in SITE_TIMEZONE.
  */
 export const POSTING_SCHEDULE = {
-	days: [1, 3, 5],
+	days: [3, 5],
 	hour: 13,
-	daysLabel: 'Mondays, Wednesdays & Fridays',
+	daysLabel: 'Wednesdays & Fridays',
 	timeLabel: '1 PM CT / 2 PM ET',
 };
