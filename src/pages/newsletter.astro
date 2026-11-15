@@ -1,0 +1,48 @@
+---
+// /newsletter: the one link every "join the newsletter" CTA points to (bio links, post endings, socials).
+// Body: src/components/newsletter/NewsletterPage.astro. Perks text: src/data/newsletter.ts.
+// Signups record where they came from, e.g. "/newsletter/ · instagram" (src/lib/newsletter.ts).
+import { getCollection } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import NewsletterPage from '../components/newsletter/NewsletterPage.astro';
+import { NEWSLETTER_PITCH, POSTING_SCHEDULE, SITE_TITLE } from '../consts';
+import { NEWSLETTER_PERKS } from '../data/newsletter';
+import { sortByDate } from '../lib/posts';
+import { abs, breadcrumbs } from '../lib/seo';
+
+const posts = sortByDate(await getCollection('blog'));
+const books = (await getCollection('books')).sort((a, b) => Number(b.data.featured) - Number(a.data.featured) || a.data.sortOrder - b.data.sortOrder);
+
+const schema = [
+	{ '@type': 'WebPage', name: 'Newsletter', url: abs('/newsletter/'), isPartOf: { '@id': abs('/#website') } },
+	breadcrumbs([{ name: 'Newsletter', path: '/newsletter/' }]),
+];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			title={`Newsletter — ${SITE_TITLE}`}
+			description={`Join The Creative Panel, Joel Green's free newsletter. ${NEWSLETTER_PITCH} New posts ${POSTING_SCHEDULE.daysLabel}.`}
+			schema={schema}
+		/>
+	</head>
+	<body>
+		<Header />
+		{
+			posts.length > 0 && (
+				<NewsletterPage latest={posts[0]} recent={posts.slice(0, 4)} book={books[0]} schedule={POSTING_SCHEDULE} pitch={NEWSLETTER_PITCH} perks={NEWSLETTER_PERKS} />
+			)
+		}
+		<Footer newsletter={false} />
+
+		<script>
+			// (The footer already calls rememberEntry(), so a signup from a social link records the platform.)
+			import { initNewsletterForms } from '../lib/newsletter';
+			initNewsletterForms();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,45 @@
+---
+// The newsletter page's signup form (lab designs now, /newsletter later).
+// Wired up by initNewsletterForms() in src/lib/newsletter.ts, which posts to the API's /subscribers
+// and records where the signup happened (e.g. "/newsletter/ · instagram").
+//   tone: 'light' on the normal page background, 'gold' on the brand-gold panel, 'dark' on black.
+interface Props {
+	id: string;
+	tone?: 'light' | 'gold' | 'dark';
+	button?: string;
+	/** Show "Free · Unsubscribe anytime · Privacy" under the form (hidden once a message shows) */
+	note?: boolean;
+}
+const { id, tone = 'light', button = 'Subscribe', note = true } = Astro.props;
+const apiUrl = import.meta.env.PUBLIC_API_URL ?? '';
+
+const input = {
+	light: 'border border-input bg-muted text-foreground focus:border-primary',
+	gold: 'border border-black/25 bg-white/90 text-black placeholder:text-black/40 focus:border-black',
+	dark: 'border border-white/20 bg-white/5 text-white placeholder:text-white/40 focus:border-brand-gold',
+}[tone];
+const btn = {
+	light: 'bg-primary text-primary-foreground',
+	gold: 'bg-black !text-brand-gold',
+	dark: 'bg-brand-gold !text-black',
+}[tone];
+const muted = { light: 'text-muted-foreground', gold: 'text-black/65', dark: 'text-white/55' }[tone];
+// The result message is colored by lib/newsletter.ts (teal / red inline); teal is unreadable on gold
+const status = { light: '', gold: '!text-black', dark: '!text-brand-gold' }[tone];
+---
+
+<div data-newsletter-root class="w-full">
+	<form class="flex w-full flex-col gap-2 sm:flex-row sm:gap-0" data-newsletter data-api={apiUrl}>
+		<label for={id} class="sr-only">Email address</label>
+		<input id={id} type="email" name="email" required autocomplete="email" placeholder="your@email.com" class:list={['w-full min-w-0 px-4 py-3.5 text-[16px] outline-none', input]} />
+		<button type="submit" class:list={['label shrink-0 px-6 py-3.5 !text-[16px] !font-semibold hover:opacity-90', btn]}>{button}</button>
+	</form>
+	<p class:list={['peer !mb-0 mt-3 text-[15px] font-medium', status]} data-newsletter-status role="status" hidden></p>
+	{
+		note && (
+			<p class:list={['!mb-0 mt-3 text-[14px] peer-[:not([hidden])]:hidden', muted]}>
+				Free · Unsubscribe anytime · <a href="/privacy" class:list={['underline', muted]}>Privacy</a>
+			</p>
+		)
+	}
+</div>

@@ -1,0 +1,97 @@
+---
+// Design lab: three takes on /newsletter, the one link every "join the newsletter" CTA points to.
+// Only built when PUBLIC_LAB=true (local preview); the live site never has these pages.
+//   PUBLIC_LAB=true astro build && astro preview  →  http://localhost:4331/lab/newsletter/
+// Don't submit real addresses here: the form is live and would add a subscriber.
+import { getCollection } from 'astro:content';
+import BaseHead from '../../../components/BaseHead.astro';
+import Footer from '../../../components/Footer.astro';
+import Header from '../../../components/Header.astro';
+import FollowTheBook from '../../../components/lab/newsletter/FollowTheBook.astro';
+import InboxPreview from '../../../components/lab/newsletter/InboxPreview.astro';
+import NewsletterPage from '../../../components/newsletter/NewsletterPage.astro';
+import Simple from '../../../components/lab/newsletter/Simple.astro';
+import type { NewsletterLabData } from '../../../components/lab/newsletter/types';
+import { NEWSLETTER_PERKS } from '../../../data/newsletter';
+import { NEWSLETTER_PITCH, POSTING_SCHEDULE } from '../../../consts';
+import { sortByDate } from '../../../lib/posts';
+
+const VARIANTS = {
+	simple: { name: 'A · Simple', note: 'One centered column: the promise and the form first, then what you get, then recent posts.' },
+	inbox: { name: 'B · Inbox preview', note: 'A gold signup panel beside a mock-up of the email you get when a post goes out.' },
+	book: { name: 'C · Follow the book', note: "The Halo's live word count as the hook, on black like the author site, with recent issues." },
+	mix: { name: 'D · Mix', note: 'The chosen design, now live at /newsletter (src/components/newsletter/NewsletterPage.astro).' },
+} as const;
+type Variant = keyof typeof VARIANTS;
+
+export async function getStaticPaths() {
+	if (process.env.PUBLIC_LAB !== 'true' && import.meta.env.PUBLIC_LAB !== 'true') return [];
+	return [undefined, 'simple', 'inbox', 'book', 'mix'].map((v) => ({ params: { variant: v } }));
+}
+
+const variant = Astro.params.variant as Variant | undefined;
+const posts = sortByDate(await getCollection('blog'));
+const books = (await getCollection('books')).sort((a, b) => Number(b.data.featured) - Number(a.data.featured) || a.data.sortOrder - b.data.sortOrder);
+
+const data: NewsletterLabData = {
+	latest: posts[0],
+	recent: posts.slice(0, 4), // D skips the latest (it is in its inbox preview); A and C show the first 3
+	book: books[0],
+	schedule: POSTING_SCHEDULE,
+	pitch: NEWSLETTER_PITCH,
+	perks: NEWSLETTER_PERKS,
+};
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={variant ? `${VARIANTS[variant].name} — Newsletter page lab` : 'Newsletter page lab'} description="Design lab" noindex />
+	</head>
+	<body class="min-h-screen">
+		{
+			!variant && (
+				<main class="mx-auto max-w-2xl px-4 py-12">
+					<h1 class="font-display !text-[36px] font-semibold uppercase">Newsletter page: 4 designs</h1>
+					<p class="text-[16px] text-muted-foreground">The page every "join the newsletter" link points to. Check each at phone width too. The forms are live, so don't submit real addresses.</p>
+					<ul class="!p-0">
+						{(Object.keys(VARIANTS) as Variant[]).map((v) => (
+							<li class="list-none border-b border-border py-4">
+								<a href={`/lab/newsletter/${v}/`} class="font-display text-[22px] font-semibold uppercase">
+									{VARIANTS[v].name}
+								</a>
+								<p class="!mb-0 mt-1 text-[15px] text-muted-foreground">{VARIANTS[v].note}</p>
+							</li>
+						))}
+					</ul>
+				</main>
+			)
+		}
+		{
+			variant && (
+				<>
+					<Header />
+					{variant === 'simple' && <Simple {...data} />}
+					{variant === 'inbox' && <InboxPreview {...data} />}
+					{variant === 'book' && <FollowTheBook {...data} />}
+					{variant === 'mix' && <NewsletterPage {...data} />}
+					<Footer newsletter={false} />
+					<nav class="fixed bottom-3 left-1/2 z-50 flex -translate-x-1/2 gap-1 rounded-full border border-white/15 bg-black/85 p-1 text-[12px] text-white shadow-lg backdrop-blur" aria-label="Lab designs">
+						{(Object.keys(VARIANTS) as Variant[]).map((v) => (
+							<a href={`/lab/newsletter/${v}/`} class:list={['rounded-full px-3 py-1.5 font-semibold no-underline', v === variant ? 'bg-white !text-black' : '!text-white/80']}>
+								{VARIANTS[v].name}
+							</a>
+						))}
+					</nav>
+				</>
+			)
+		}
+
+		<script>
+			import { initNewsletterForms } from '../../../lib/newsletter';
+			import { rememberEntry } from '../../../lib/viewSource';
+			initNewsletterForms();
+			rememberEntry();
+		</script>
+	</body>
+</html>
