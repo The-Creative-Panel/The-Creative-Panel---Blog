@@ -38,6 +38,27 @@ export function paintStats(stats: Stats) {
 	});
 }
 
+/**
+ * Re-order ranked lists with live counts (the build-time order goes stale).
+ * Markup: <ol data-rank-by="views|likes"> with <li data-slug data-newest> children,
+ * each holding a [data-rank] badge. Highest count first, ties newest first;
+ * only the first `top` stay visible and badges are renumbered 01, 02, …
+ */
+export function rerankLists(stats: Stats, top = 10) {
+	document.querySelectorAll<HTMLOListElement>('ol[data-rank-by]').forEach((list) => {
+		const key = list.dataset.rankBy as 'views' | 'likes';
+		const count = (li: HTMLElement) => stats[li.dataset.slug!]?.[key] ?? 0;
+		[...list.querySelectorAll<HTMLLIElement>(':scope > li')]
+			.sort((a, b) => count(b) - count(a) || Number(a.dataset.newest) - Number(b.dataset.newest))
+			.forEach((li, i) => {
+				li.hidden = i >= top;
+				const badge = li.querySelector('[data-rank]');
+				if (badge) badge.textContent = String(i + 1).padStart(2, '0');
+				list.append(li);
+			});
+	});
+}
+
 export async function refreshStats() {
 	const stats = await loadAllStats();
 	if (stats) paintStats(stats);

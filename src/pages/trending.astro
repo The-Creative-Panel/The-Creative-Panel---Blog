@@ -23,9 +23,12 @@ const score = (p: Post, key: 'views' | 'likes') => stats[p.id]?.[key] ?? 0;
 const ranked = (key: 'views' | 'likes') =>
 	posts.some((p) => score(p, key) > 0) ? [...posts].sort((a, b) => score(b, key) - score(a, key)) : posts;
 
+// Every post is rendered (beyond the top 10 hidden) so the browser can re-rank with live counts.
+const TOP = 10;
+const newestRank = new Map(posts.map((p, i) => [p.id, i])); // tie-break: newer first
 const tabs = [
-	{ id: 'read', key: 'views' as const, label: 'Most Read', posts: ranked('views').slice(0, 10) },
-	{ id: 'liked', key: 'likes' as const, label: 'Most Liked', posts: ranked('likes').slice(0, 10) },
+	{ id: 'read', key: 'views' as const, label: 'Most Read', posts: ranked('views') },
+	{ id: 'liked', key: 'likes' as const, label: 'Most Liked', posts: ranked('likes') },
 ];
 ---
 
@@ -73,11 +76,11 @@ const tabs = [
 		<main class="trending page-wide">
 			{
 				tabs.map((t, i) => (
-					<ol id={`panel-${t.id}`} role="tabpanel" aria-labelledby={`tab-${t.id}`} class="!mx-auto !my-0 !p-0" hidden={i !== 0}>
+					<ol id={`panel-${t.id}`} role="tabpanel" aria-labelledby={`tab-${t.id}`} data-rank-by={t.key} class="!mx-auto !my-0 !p-0" hidden={i !== 0}>
 						{t.posts.map((p, rank) => (
-							<li class="list-none">
+							<li class="list-none" data-slug={p.id} data-newest={newestRank.get(p.id)} hidden={rank >= TOP}>
 								<a href={`/blog/${p.id}/`} class="group grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-5 py-6 !text-foreground no-underline sm:grid-cols-[64px_minmax(0,1fr)_128px] sm:gap-x-6">
-									<span class="font-display text-[44px] font-semibold leading-none text-foreground/15 transition-colors group-hover:text-primary/40 sm:text-[56px]" aria-hidden="true">
+									<span data-rank class="font-display text-[44px] font-semibold leading-none text-foreground/15 transition-colors group-hover:text-primary/40 sm:text-[56px]" aria-hidden="true">
 										{String(rank + 1).padStart(2, '0')}
 									</span>
 									<div class="min-w-0">
@@ -126,8 +129,14 @@ const tabs = [
 		<Footer />
 
 		<script>
-			import { refreshStats } from '../lib/liveStats';
-			refreshStats();
+			import { loadAllStats, paintStats, rerankLists } from '../lib/liveStats';
+
+			// The build-time order goes stale as counts change, so paint live numbers and re-rank.
+			loadAllStats().then((stats) => {
+				if (!stats) return;
+				paintStats(stats);
+				rerankLists(stats, 10);
+			});
 
 			// Tabs: show one list at a time; remember the choice in the URL (#liked)
 			const tabs = document.querySelectorAll<HTMLButtonElement>('[data-tab]');
